@@ -12,7 +12,7 @@ class OWTFCliScopeTest(OWTFCliTestCase):
 
     def test_cli_target_is_valid_ip(self):
         """Run OWTF with a valid IP target (regression #375)."""
-        self.run_owtf("-s", "%s:%s" % (self.IP, self.PORT))
+        self.run_owtf("-s", f"{self.IP}:{self.PORT}")
         self.assert_is_in_logs(
             "(network/", name="Worker", msg="Net plugins should have been run!"
         )
@@ -31,7 +31,7 @@ class OWTFCliScopeTest(OWTFCliTestCase):
     def test_cli_target_is_invalid_url(self):
         """Run OWTF with an invalid target."""
         invalid_target = "a" * 63 + ".invalid"
-        self.run_owtf("%s://%s" % (self.PROTOCOL, invalid_target))
+        self.run_owtf(f"{self.PROTOCOL}://{invalid_target}")
         self.assert_is_in_logs(
             "Unable to resolve: '%s'" % invalid_target,
             name="MainProcess",
@@ -41,7 +41,7 @@ class OWTFCliScopeTest(OWTFCliTestCase):
     def test_cli_target_is_invalid(self):
         """Run OWTF with an invalid target."""
         invalid_target = "aaaaaaaaaaaaaaaaaaaa"
-        self.run_owtf("%s" % invalid_target)
+        self.run_owtf(f"{invalid_target}")
         self.assert_is_in_logs(
             "Unable to resolve: '%s'" % invalid_target,
             name="MainProcess",
@@ -50,7 +50,7 @@ class OWTFCliScopeTest(OWTFCliTestCase):
 
     def test_cli_target_is_valid_http(self):
         """Run OWTF with a valid http target."""
-        self.run_owtf("-s", "%s://%s:%s" % (self.PROTOCOL, self.DOMAIN, self.PORT))
+        self.run_owtf("-s", f"{self.PROTOCOL}://{self.DOMAIN}:{self.PORT}")
         self.assert_is_in_logs(
             "(web/", name="Worker", msg="Web plugins should have been run!"
         )
@@ -70,9 +70,10 @@ class OWTFCliScopeTest(OWTFCliTestCase):
         """Run OWTF with a valid http target and a valid IP one (regression #375)."""
         self.run_owtf(
             "-s",
-            "%s://%s:%s" % (self.PROTOCOL, self.DOMAIN, self.PORT),
-            "%s:%s" % (self.IP, self.PORT),
+            f"{self.PROTOCOL}://{self.DOMAIN}:{self.PORT}",
+            f"{self.IP}:{self.PORT}",
         )
+
         self.assert_is_in_logs(
             "(web/", name="Worker", msg="Web plugins should have been run!"
         )
@@ -94,9 +95,10 @@ class OWTFCliScopeTest(OWTFCliTestCase):
             "-s",
             "-g",
             "web",
-            "%s://%s:%s" % (self.PROTOCOL, self.DOMAIN, self.PORT),
-            "%s:%s" % (self.IP, self.PORT),
+            f"{self.PROTOCOL}://{self.DOMAIN}:{self.PORT}",
+            f"{self.IP}:{self.PORT}",
         )
+
         self.assert_is_in_logs(
             "(web/", name="Worker", msg="Web plugins should have been run!"
         )
@@ -118,9 +120,10 @@ class OWTFCliScopeTest(OWTFCliTestCase):
             "-s",
             "-g",
             "network",
-            "%s://%s:%s" % (self.PROTOCOL, self.DOMAIN, self.PORT),
-            "%s:%s" % (self.IP, self.PORT),
+            f"{self.PROTOCOL}://{self.DOMAIN}:{self.PORT}",
+            f"{self.IP}:{self.PORT}",
         )
+
         self.assert_is_in_logs(
             "(network/", name="Worker", msg="Net plugins should have been run!"
         )

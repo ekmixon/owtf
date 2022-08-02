@@ -32,19 +32,17 @@ class Error(Model):
 
     @classmethod
     def get_error(cls, session, error_id):
-        error = session.query(Error).get(error_id)
-        if not error:  # If invalid error id, bail out
+        if error := session.query(Error).get(error_id):
+            return error.to_dict()
+        else:
             raise InvalidErrorReference("No error with id {!s}".format(error_id))
-        return error.to_dict()
 
     @classmethod
     def delete_error(cls, session, id):
-        error = session.query(cls).get(id)
-        if error:
-            session.delete(error)
-            session.commit()
-        else:
+        if not (error := session.query(cls).get(id)):
             raise InvalidErrorReference("No error with id {!s}".format(id))
+        session.delete(error)
+        session.commit()
 
     def to_dict(self):
         obj = dict(self.__dict__)
@@ -54,10 +52,7 @@ class Error(Model):
     @classmethod
     def get_all_dict(cls, session):
         errors = session.query(Error).all()
-        result = []
-        for err in errors:
-            result.append(err.to_dict())
-        return result
+        return [err.to_dict() for err in errors]
 
     @classmethod
     def update_error(cls, session, error_id, user_message):

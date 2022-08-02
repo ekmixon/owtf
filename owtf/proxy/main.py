@@ -107,9 +107,9 @@ class ProxyProcess(OWTFProcess):
             cookies_list = WHITELIST_COOKIES.split(",")
             self.application.cookie_blacklist = False
         if self.application.cookie_blacklist:
-            regex_cookies_list = [cookie + "=([^;]+;?)" for cookie in cookies_list]
+            regex_cookies_list = [f"{cookie}=([^;]+;?)" for cookie in cookies_list]
         else:
-            regex_cookies_list = ["(" + cookie + "=[^;]+;?)" for cookie in cookies_list]
+            regex_cookies_list = [f"({cookie}=[^;]+;?)" for cookie in cookies_list]
         regex_string = "|".join(regex_cookies_list)
         self.application.cookie_regex = re.compile(regex_string)
 
@@ -174,10 +174,11 @@ class ProxyProcess(OWTFProcess):
             tornado.options.parse_command_line(
                 args=[
                     "dummy_arg",
-                    "--log_file_prefix={}".format(PROXY_LOG),
+                    f"--log_file_prefix={PROXY_LOG}",
                     "--logging=info",
                 ]
             )
+
             # To run any number of instances
             # "0" equals the number of cores present in a machine
             self.server.start(int(self.instances))
@@ -204,25 +205,24 @@ def start_proxy():
     :return:
     :rtype: None
     """
-    if True:
-        # Check if port is in use
-        try:
-            temp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            temp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            temp_socket.bind((INBOUND_PROXY_IP, INBOUND_PROXY_PORT))
-            temp_socket.close()
-        except socket.error:
-            abort_framework("Inbound proxy address already in use")
-        # If everything is fine.
-        proxy_process = ProxyProcess()
-        logging.warn(
-            "Starting HTTP(s) proxy server at %s:%d",
-            INBOUND_PROXY_IP,
-            INBOUND_PROXY_PORT,
-        )
-        proxy_process.initialize(USE_OUTBOUND_PROXY, OUTBOUND_PROXY_AUTH)
-        proxy_process.start()
-        logging.debug("Proxy transaction's log file at %s", PROXY_LOG)
+    # Check if port is in use
+    try:
+        temp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        temp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        temp_socket.bind((INBOUND_PROXY_IP, INBOUND_PROXY_PORT))
+        temp_socket.close()
+    except socket.error:
+        abort_framework("Inbound proxy address already in use")
+    # If everything is fine.
+    proxy_process = ProxyProcess()
+    logging.warn(
+        "Starting HTTP(s) proxy server at %s:%d",
+        INBOUND_PROXY_IP,
+        INBOUND_PROXY_PORT,
+    )
+    proxy_process.initialize(USE_OUTBOUND_PROXY, OUTBOUND_PROXY_AUTH)
+    proxy_process.start()
+    logging.debug("Proxy transaction's log file at %s", PROXY_LOG)
 
 
 if __name__ == "__main__":

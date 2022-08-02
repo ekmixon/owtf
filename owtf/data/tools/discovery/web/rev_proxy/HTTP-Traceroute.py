@@ -104,7 +104,7 @@ contentType = "text/html"
 
 # Pretty printing
 def zprint(string, flag="=="):
-    print("[" + flag + "] " + string)
+    print(f"[{flag}] {string}")
 
 
 # Increment the heuristic score
@@ -112,7 +112,7 @@ def inc_score():
     global score
     score = score + 1
     if verbosity:
-        zprint("Score : " + str(score), "!!")
+        zprint(f"Score : {str(score)}", "!!")
 
 
 # Help
@@ -131,11 +131,11 @@ def showUsage():
     print('\t[-f] Max # of forwards : default is "3"')
     print("\t[-v] Verbosity : 0 = default, 1 = verbose, 2 = debug")
     print("Examples :")
-    print(sys.argv[0] + " -t www.example.org")
+    print(f"{sys.argv[0]} -t www.example.org")
     print("  => TRACE /")
-    print(sys.argv[0] + " -t www.example.org -m GET -s https -p 443 -v 1")
+    print(f"{sys.argv[0]} -t www.example.org -m GET -s https -p 443 -v 1")
     print("  => GET / on a SSL host")
-    print(sys.argv[0] + " -t www.example.org -m POST -P /axis2/checkacc -v 2 -f 5")
+    print(f"{sys.argv[0]} -t www.example.org -m POST -P /axis2/checkacc -v 2 -f 5")
     print("  => Debug mode on a specific end-point")
     sys.exit(1)
 
@@ -201,10 +201,10 @@ def analyse_headers(data):
             if verbosity:
                 zprint(h_value, h_name)
             # Add it to the global structure if needed
-            if h_name == "Server" or h_name == "Content-Type":
+            if h_name in ["Server", "Content-Type"]:
                 global_data[h_name][hop] = h_value
             # Some heuristics
-            if h_name == "Via" or h_name == "X-Via":
+            if h_name in ["Via", "X-Via"]:
                 zprint('"Via" header : Probably a reverse proxy', "++")
                 global_data["Via"][hop] = h_value
                 inc_score()
@@ -261,7 +261,7 @@ def debug_and_parse(data):
 
     # Extract some interesting info
     codes = server.BaseHTTPRequestHandler.responses
-    global_data["StatusCode"][hop] = str(data.code) + " " + codes[data.code][0]
+    global_data["StatusCode"][hop] = f"{str(data.code)} {codes[data.code][0]}"
     analyse_headers(headers)
     analyse_body(body)
 
@@ -272,13 +272,13 @@ def debug_and_parse(data):
 getArguments()
 
 # Current target
-url = scheme + "://" + host + ":" + port + path
-zprint("Target URL : " + url)
-zprint("Used method : " + method)
-zprint("Max number of hops : " + str(max_fwds))
+url = f"{scheme}://{host}:{port}{path}"
+zprint(f"Target URL : {url}")
+zprint(f"Used method : {method}")
+zprint(f"Max number of hops : {str(max_fwds)}")
 
 # Scan
-for hop in range(0, max_fwds):
+for hop in range(max_fwds):
 
     # Create the request object
     request = Request(url)
@@ -309,25 +309,23 @@ for hop in range(0, max_fwds):
         # Analyse it
         debug_and_parse(result)
 
-    # Not a 200 OK
     except HTTPError as e:
         if verbosity:
-            zprint("Status Code => " + str(e), "**")
+            zprint(f"Status Code => {str(e)}", "**")
         # Some heuristics
-        if e.code == 502:
-            zprint("HTTP 502 : Probably a reverse proxy", "++")
-            inc_score()
         if e.code == 483:
             zprint("HTTP 483 : Probably a reverse proxy (SIP ?)", "++")
             inc_score()
 
+        elif e.code == 502:
+            zprint("HTTP 502 : Probably a reverse proxy", "++")
+            inc_score()
         # Analyse it
         debug_and_parse(e)
 
-    # Network problem
     except URLError as e:
         zprint("Network problem !", "!!")
-        zprint("Reason : " + str(e.reason), "!!")
+        zprint(f"Reason : {str(e.reason)}", "!!")
         break
 
 ############## REPORT ###################################
@@ -342,7 +340,7 @@ for k in list(global_data.keys()):
     previous = "Undef"
     # For each hop
     ok = 0
-    for i in range(0, max_fwds):
+    for i in range(max_fwds):
         # Try this key
         try:
             current = global_data[k][i]
@@ -367,4 +365,4 @@ for k in list(global_data.keys()):
 if score == 0:
     zprint("No reverse proxy", "--")
 else:
-    zprint("Found a reverse proxy, score is " + str(score), "++")
+    zprint(f"Found a reverse proxy, score is {str(score)}", "++")

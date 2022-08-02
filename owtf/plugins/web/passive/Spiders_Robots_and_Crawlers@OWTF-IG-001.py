@@ -35,11 +35,12 @@ def run(PluginInfo):
                 Transaction.get_raw_response_body,
                 LinkStart,
                 LinkFinish,
-                "robots%s.txt" % str(Count),
+                f"robots{str(Count)}.txt",
             )
+
             Count += 1
         else:  # Not found or unknown request error
-            Message = "Could not be retrieved using resource: %s" % Resource
+            Message = f"Could not be retrieved using resource: {Resource}"
             logging.info(Message)
         Content += plugin_helper.TransactionTableForURLList(True, [URL])
     return Content

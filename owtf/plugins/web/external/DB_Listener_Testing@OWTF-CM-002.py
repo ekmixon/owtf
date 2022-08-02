@@ -4,5 +4,4 @@ DESCRIPTION = "Plugin to assist manual testing"
 
 
 def run(PluginInfo):
-    Content = plugin_helper.HtmlString("Intended to show helpful info in the future")
-    return Content
+    return plugin_helper.HtmlString("Intended to show helpful info in the future")

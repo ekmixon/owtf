@@ -57,12 +57,11 @@ class BaseShell(object):
             # Restore original command saved at modification time
             original_cmd = self.old_cmds[modified_cmd]
         self.timer.start_timer(self.command_time_offset)
-        commands = {
+        return {
             "OriginalCommand": original_cmd,
             "ModifiedCommand": modified_cmd,
             "Start": self.timer.get_start_date_time(self.command_time_offset),
         }
-        return commands
 
     def finish_cmd(self, session, cmd_info, was_cancelled, plugin_info):
         """Finish the command run
@@ -77,9 +76,7 @@ class BaseShell(object):
         :rtype: None
         """
         cmd_info["End"] = self.timer.get_end_date_time(self.command_time_offset)
-        success = True
-        if was_cancelled:
-            success = False
+        success = not was_cancelled
         cmd_info["Success"] = success
         cmd_info["RunTime"] = self.timer.get_elapsed_time_as_str(
             self.command_time_offset
@@ -109,10 +106,8 @@ class BaseShell(object):
         :rtype: `str`
         """
         self.refresh_replacements()
-        new_cmd = "cd {};{}".format(
-            self.escape_shell_path(plugin_output_dir),
-            multi_replace_dict(command, self.dynamic_replacements),
-        )
+        new_cmd = f"cd {self.escape_shell_path(plugin_output_dir)};{multi_replace_dict(command, self.dynamic_replacements)}"
+
         new_cmd = multi_replace_dict(
             new_cmd,
             {
@@ -132,10 +127,9 @@ class BaseShell(object):
         :return: List of return values
         :rtype: `list`
         """
-        target = command_already_registered(
+        if target := command_already_registered(
             session=session, original_command=command["OriginalCommand"]
-        )
-        if target:  # target_config will be None for a not found match
+        ):
             return [target, False]
         return [None, True]
 
@@ -147,10 +141,7 @@ class BaseShell(object):
         :return:
         :rtype:
         """
-        # Add proxy settings to environment variables so that tools can pick it up proxification, because these
-        #  variables are set for every command that is run
-        # http://stackoverflow.com/questions/4789837/how-to-terminate-a-python-subprocess-launched-with-shell-true/4791612#4791612)
-        proc = subprocess.Popen(
+        return subprocess.Popen(
             command,
             shell=True,
             env=self.shell_env,
@@ -159,7 +150,6 @@ class BaseShell(object):
             stderr=subprocess.STDOUT,
             bufsize=1,
         )
-        return proc
 
     def shell_exec_monitor(self, session, command, plugin_info):
         """Monitor shell command execution
@@ -174,8 +164,7 @@ class BaseShell(object):
         cmd_info = self.start_cmd(command, command)
         target, can_run = self.can_run_cmd(session=session, command=cmd_info)
         if not can_run:
-            message = "The command was already run for target: {!s}".format(target)
-            return message
+            return "The command was already run for target: {!s}".format(target)
         logging.info("")
         logging.info("Executing :\n\n%s\n\n", command)
         logging.info(

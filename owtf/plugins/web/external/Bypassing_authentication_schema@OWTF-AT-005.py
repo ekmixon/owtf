@@ -6,5 +6,4 @@ DESCRIPTION = "Plugin to assist manual testing"
 
 def run(PluginInfo):
     resource = get_resources("ExternalBypassingAuthenticationSchema")
-    Content = plugin_helper.resource_linklist("Online Resources", resource)
-    return Content
+    return plugin_helper.resource_linklist("Online Resources", resource)

@@ -105,21 +105,21 @@ class PluginHelper(object):
 
     def Requestlink_list(self, ResourceListName, ResourceList, PluginInfo):
         link_list = []
+        Method = "GET"
         for Name, Resource in ResourceList:
             Chunks = Resource.split("###POST###")
             URL = Chunks[0]
             POST = None
-            Method = "GET"
             if len(Chunks) > 1:  # POST
-                Method = "POST"
                 POST = Chunks[1]
-                Transaction = self.requester.get_transaction(True, URL, Method, POST)
+                Transaction = self.requester.get_transaction(True, URL, "POST", POST)
                 if Transaction is not None and Transaction.found:
                     RawHTML = Transaction.get_raw_response_body
                     FilteredHTML = cgi.escape(RawHTML)
                     NotSandboxedPath = self.runner.dump_output_file(
-                        "NOT_SANDBOXED_%s.html" % Name, FilteredHTML, PluginInfo
+                        f"NOT_SANDBOXED_{Name}.html", FilteredHTML, PluginInfo
                     )
+
                     logging.info(
                         "File: NOT_SANDBOXED_%s.html saved to: %s",
                         Name,
@@ -137,8 +137,9 @@ class PluginHelper(object):
                         NotSandboxedPath=NotSandboxedPath.split("/")[-1]
                     )
                     SandboxedPath = self.runner.dump_output_file(
-                        "SANDBOXED_%s.html" % Name, iframe, PluginInfo
+                        f"SANDBOXED_{Name}.html", iframe, PluginInfo
                     )
+
                     logging.info(
                         "File: SANDBOXED_%s.html saved to: %s", Name, SandboxedPath
                     )
@@ -171,8 +172,9 @@ class PluginHelper(object):
         PluginOutputDir = self.runner.get_plugin_output_dir(PluginInfo)
         # FULL output path for plugins to use
         target_manager.set_path(
-            "plugin_output_dir", "{}/{}".format(os.getcwd(), PluginOutputDir)
+            "plugin_output_dir", f"{os.getcwd()}/{PluginOutputDir}"
         )
+
         self.shell.refresh_replacements()  # Get dynamic replacement, i.e. plugin-specific output directory
         return PluginOutputDir
 
@@ -202,7 +204,7 @@ class PluginHelper(object):
             FrameworkAbort = True
         TimeStr = timer.get_elapsed_time_as_str("FormatCommandAndOutput")
         logging.info("Time=%s", TimeStr)
-        out = [
+        return [
             ModifiedCommand,
             FrameworkAbort,
             PluginAbort,
@@ -210,20 +212,17 @@ class PluginHelper(object):
             RawOutput,
             PluginOutputDir,
         ]
-        return out
 
     def GetCommandOutputFileNameAndExtension(self, InputName):
         OutputName = InputName
         OutputExtension = "txt"
         if InputName.split(".")[-1] in ["html"]:
-            OutputName = InputName[0:-5]
+            OutputName = InputName[:-5]
             OutputExtension = "html"
         return [OutputName, OutputExtension]
 
     def EscapeSnippet(self, Snippet, Extension):
-        if Extension == "html":  # HTML
-            return str(Snippet)
-        return cgi.escape(str(Snippet))  # Escape snippet to avoid breaking HTML
+        return str(Snippet) if Extension == "html" else cgi.escape(str(Snippet))
 
     def CommandDump(
         self, CommandIntro, OutputIntro, ResourceList, PluginInfo, PreviousOutput
@@ -268,17 +267,16 @@ class PluginHelper(object):
         self.timer.start_timer("LogURLsFromStr")
         # Extract and classify URLs and store in DB
         URLList = import_urls(RawOutput.strip().split("\n"))
-        NumFound = 0
         VisitURLs = False
-        # TODO: Whether or not active testing will depend on the user profile ;). Have cool ideas for profile names
-        if True:
-            VisitURLs = True
-            # Visit all URLs if not in Cache
+        VisitURLs = True
+        NumFound = sum(
+            1
             for Transaction in self.requester.get_transactions(
                 True, get_urls_to_visit()
-            ):
-                if Transaction is not None and Transaction.found:
-                    NumFound += 1
+            )
+            if Transaction is not None and Transaction.found
+        )
+
         TimeStr = self.timer.get_elapsed_time_as_str("LogURLsFromStr")
         logging.info("Spider/URL scraper time=%s", TimeStr)
         plugin_output["type"] = "URLsFromStr"
@@ -305,7 +303,7 @@ class PluginHelper(object):
 
         return [
             save_path,
-            template.generate(LinkName=LinkName, Link="../../../{}".format(save_path)),
+            template.generate(LinkName=LinkName, Link=f"../../../{save_path}"),
         ]
 
     def DumpFileGetLink(self, Filename, Contents, PluginInfo, LinkName=""):
@@ -325,9 +323,7 @@ class PluginHelper(object):
         )  # Number of lines that start with "Disallow:"
         SitemapEntries = list(set(self.robots_sitemap.findall(Contents)))
         num_sitemap = len(SitemapEntries)  # Number of lines that start with "Sitemap:"
-        RobotsFound = True
-        if 0 == num_allow and 0 == num_disallow and 0 == num_sitemap:
-            RobotsFound = False
+        RobotsFound = num_allow != 0 or num_disallow != 0 or num_sitemap != 0
         return [
             num_lines,
             AllowedEntries,
@@ -349,9 +345,9 @@ class PluginHelper(object):
         )
         SavePath = self.runner.dump_output_file(Filename, Contents, PluginInfo, True)
         TopURL = target_manager.get_val("top_url")
-        EntriesList = []
         # robots.txt contains some entries, show browsable list! :)
         if num_disallow > 0 or num_allow > 0 or num_sitemap > 0:
+            EntriesList = []
             for Display, Entries in [
                 ["Disallowed Entries", DisallowedEntries],
                 ["Allowed Entries", AllowedEntries],
@@ -359,7 +355,7 @@ class PluginHelper(object):
             ]:
                 Links = []  # Initialise category-specific link list
                 for Entry in Entries:
-                    if "Sitemap Entries" == Display:
+                    if Display == "Sitemap Entries":
                         URL = Entry
                         add_url(self.session, URL)  # Store real links in the DB
                         Links.append(
@@ -384,9 +380,7 @@ class PluginHelper(object):
 
     def TransactionTable(self, transactions_list):
         # Store transaction ids in the output, so that reporter can fetch transactions from db
-        trans_ids = []
-        for transaction in transactions_list:
-            trans_ids.append(transaction.GetID())
+        trans_ids = [transaction.GetID() for transaction in transactions_list]
         plugin_output = dict(PLUGIN_OUTPUT)
         plugin_output["type"] = "TransactionTableFromIDs"
         plugin_output["output"] = {"TransactionIDs": trans_ids}
@@ -414,10 +408,7 @@ class PluginHelper(object):
         return ([plugin_output])
 
     def CreateMatchTables(self, Num):
-        TableList = []
-        for x in range(0, Num):
-            TableList.append(self.CreateMatchTable())
-        return TableList
+        return [self.CreateMatchTable() for _ in range(Num)]
 
     def HtmlString(self, html_string):
         plugin_output = dict(PLUGIN_OUTPUT)

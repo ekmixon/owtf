@@ -30,7 +30,7 @@ def get_test_groups_config(file_path):
     test_groups = []
     config_file = FileOperations.open(file_path, "r").read().splitlines()
     for line in config_file:
-        if "#" == line[0]:
+        if line[0] == "#":
             continue  # Skip comments
         try:
             code, priority, descrip, hint, url = line.strip().split(" | ")
@@ -67,7 +67,7 @@ def load_test_groups(session, file_default, file_fallback, plugin_group):
     :rtype: None
     """
     file_path = file_default
-    if not os.path.isfile(file_default):
+    if not os.path.isfile(file_path):
         file_path = file_fallback
     test_groups = get_test_groups_config(file_path)
     for group in test_groups:
@@ -228,10 +228,7 @@ def get_all_plugin_dicts(session, criteria=None):
         criteria["code"] = Plugin.name_to_code(session, criteria["code"])
     query = plugin_gen_query(session, criteria)
     plugin_obj_list = query.all()
-    plugin_dicts = []
-    for obj in plugin_obj_list:
-        plugin_dicts.append(obj.to_dict())
-    return plugin_dicts
+    return [obj.to_dict() for obj in plugin_obj_list]
 
 
 def get_plugins_by_type(session, plugin_type):

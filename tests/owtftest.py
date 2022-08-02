@@ -51,15 +51,12 @@ class OWTFCliTestCase(unittest.TestCase):
 
     def run_owtf(self, *extra_args):
         """Run OWTF with args plus ``extra_args`` if any."""
-        if self.args:
-            args = self.args[:]
-        else:
-            args = self.DEFAULT_ARGS[:]
+        args = self.args[:] if self.args else self.DEFAULT_ARGS[:]
         if extra_args:
             args += extra_args
-        print("with the following options: %s" % args)
+        print(f"with the following options: {args}")
         args_str = " ".join(args)
-        os.system("owtf {}".format(args_str))
+        os.system(f"owtf {args_str}")
         self.load_logs()
 
     def load_logs(self):

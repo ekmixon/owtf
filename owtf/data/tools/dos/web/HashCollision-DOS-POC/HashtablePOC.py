@@ -74,15 +74,14 @@ class Payloadgenerator:
         return self._generatePayload(a, self._payloadlength)
 
     def _computePHPCollisionChars(self, count):
-        charrange = range(0, 256)
+        charrange = range(256)
         return self._computeCollisionChars(self._DJBX33A, count, charrange)
 
     def _computeJAVACollisionChars(self, count):
-        charrange = range(0, 129)
+        charrange = range(129)
         return self._computeCollisionChars(self._DJBX31A, count, charrange)
 
     def _computeCollisionChars(self, function, count, charrange):
-        hashes = {}
         counter = 0
         length = self._collisioncharlength
         a = ""
@@ -91,8 +90,8 @@ class Payloadgenerator:
         source = list(itertools.product(a, repeat=length))
         basestr = "".join(random.choice(source))
         basehash = function(basestr)
-        hashes[str(counter)] = basestr
-        counter = counter + 1
+        hashes = {str(counter): basestr}
+        counter += 1
         for item in source:
             tempstr = "".join(item)
             if tempstr == basestr:
@@ -110,14 +109,13 @@ class Payloadgenerator:
             print("%d: Not enough values found. Trying it again..." % self._recursivecounter)
             self._recursivecounter = self._recursivecounter + 1
             hashes = self._computeCollisionChars(function, count, charrange)
-        else:
-            if self._verbose:
-                print("Found values:")
-                for item in hashes:
-                    tempstr = hashes[item]
-                    print("\tValue: %s\tHash: %s" % (tempstr, function(tempstr)))
-                    for i in tempstr:
-                        print("\t\tValue: %s\tCharcode: %d" % (i, ord(i)))
+        elif self._verbose:
+            print("Found values:")
+            for item in hashes:
+                tempstr = hashes[item]
+                print("\tValue: %s\tHash: %s" % (tempstr, function(tempstr)))
+                for i in tempstr:
+                    print("\t\tValue: %s\tCharcode: %d" % (i, ord(i)))
         return hashes
 
     def _DJBXA(self, inputstring, base, start):

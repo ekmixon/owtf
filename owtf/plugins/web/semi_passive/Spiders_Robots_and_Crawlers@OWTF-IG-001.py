@@ -13,7 +13,7 @@ DESCRIPTION = "Normal request for robots.txt analysis"
 
 def run(PluginInfo):
     top_url = target_manager.get_val("top_url")
-    url = "{}/robots.txt".format(top_url)
+    url = f"{top_url}/robots.txt"
     test_result = []
     # Use transaction cache if possible for speed
     http_transaction = requester.get_transaction(True, url, "GET")

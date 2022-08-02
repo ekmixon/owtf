@@ -8,7 +8,6 @@ CATEGORIES = ["RCE", "SQLI", "XSS", "CHARSET"]
 
 
 def run(PluginInfo):
-    Content = []
     logging.info(
         "WARNING: This plugin requires a small selenium installation, please run '%s' if you have issues"
         % config.get_val("INSTALL_SCRIPT")
@@ -32,4 +31,4 @@ def run(PluginInfo):
             {"BASE_URL": args["BASE_URL"], "INPUT_FILE": InputFile}
         )
         URLLauncher.run()
-    return Content
+    return []

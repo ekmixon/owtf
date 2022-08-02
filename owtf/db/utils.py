@@ -11,11 +11,7 @@ def filter_none(kwargs):
     :param kwargs: Dict to filter
     :return: Dict without any 'None' values
     """
-    n_kwargs = {}
-    for k, v in kwargs.items():
-        if v:
-            n_kwargs[k] = v
-    return n_kwargs
+    return {k: v for k, v in kwargs.items() if v}
 
 
 def session_query(model):
@@ -84,9 +80,11 @@ def find_any(query, model, kwargs):
     :param kwargs:
     :return:
     """
-    or_args = []
-    for attr, value in kwargs.items():
-        or_args.append(or_(get_model_column(model, attr) == value))
+    or_args = [
+        or_(get_model_column(model, attr) == value)
+        for attr, value in kwargs.items()
+    ]
+
     exprs = or_(*or_args)
     return query.filter(exprs)
 
@@ -100,7 +98,7 @@ def filter(query, model, terms):
     :return:
     """
     column = get_model_column(model, terms[0])
-    return query.filter(column.ilike("%{}%".format(terms[1])))
+    return query.filter(column.ilike(f"%{terms[1]}%"))
 
 
 def sort(query, model, field, direction):
@@ -148,7 +146,7 @@ def apply_pagination(query, page_number=None, page_size=None):
     query = _limit(query, page_size)
 
     # Page size defaults to total results
-    if page_size is None or (page_size > total_results and total_results > 0):
+    if page_size is None or page_size > total_results > 0:
         page_size = total_results
 
     query = _offset(query, page_number, page_size)
@@ -166,7 +164,7 @@ def apply_pagination(query, page_number=None, page_size=None):
 def _limit(query, page_size):
     if page_size is not None:
         if page_size < 0:
-            raise Exception("Page size should not be negative: {}".format(page_size))
+            raise Exception(f"Page size should not be negative: {page_size}")
 
         query = query.limit(page_size)
 
@@ -176,7 +174,7 @@ def _limit(query, page_size):
 def _offset(query, page_number, page_size):
     if page_number is not None:
         if page_number < 1:
-            raise Exception("Page number should be positive: {}".format(page_number))
+            raise Exception(f"Page number should be positive: {page_number}")
 
         query = query.offset((page_number - 1) * page_size)
 
@@ -184,7 +182,4 @@ def _offset(query, page_number, page_size):
 
 
 def _calculate_num_pages(page_number, page_size, total_results):
-    if page_size == 0:
-        return 0
-
-    return math.ceil(total_results / page_size)
+    return 0 if page_size == 0 else math.ceil(total_results / page_size)

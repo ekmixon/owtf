@@ -24,11 +24,8 @@ def get_plugins_wp():
 
     tree = html.fromstring(content.read())
     el_list = tree.find("body").find("ul").findall("li")
-    plugins = []
-    for el in el_list:
-        plugins.append(el.text_content())
-
-    with open("%s/wp_plugins.txt.new" % CMS_EXPLORER_DIR, "w+") as file:
+    plugins = [el.text_content() for el in el_list]
+    with open(f"{CMS_EXPLORER_DIR}/wp_plugins.txt.new", "w+") as file:
         for plugin in plugins:
             file.write("wp-content/plugins/%s\n" % plugin.encode("ascii", "ignore"))
     print("WP plugins list updated!")
@@ -40,11 +37,8 @@ def get_themes_wp():
 
     tree = html.fromstring(content.read())
     el_list = tree.find("body").find("ul").findall("li")
-    themes = []
-    for el in el_list:
-        themes.append(el.text_content())
-
-    with open("%s/wp_themes.txt.new" % CMS_EXPLORER_DIR, "w+") as file:
+    themes = [el.text_content() for el in el_list]
+    with open(f"{CMS_EXPLORER_DIR}/wp_themes.txt.new", "w+") as file:
         for theme in themes:
             file.write("wp-content/themes/%s\n" % theme.encode("ascii", "ignore"))
     print("WP themes list updated!")
@@ -64,7 +58,7 @@ def get_drupal_plugins():
         module = string.replace("/project", "modules")
         modules.append(module)
 
-    with open("%s/drupal_plugins.txt.new" % CMS_EXPLORER_DIR, "w+") as file:
+    with open(f"{CMS_EXPLORER_DIR}/drupal_plugins.txt.new", "w+") as file:
         for module in modules:
             file.write("%s\n" % module.encode("ascii", "ignore"))
     print("Drupal plugins list updated!")
@@ -83,7 +77,7 @@ def get_drupal_themes():
         theme = string.replace("/project", "themes")
         themes.append(theme)
 
-    with open("%s/drupal_themes.txt.new" % CMS_EXPLORER_DIR, "w+") as file:
+    with open(f"{CMS_EXPLORER_DIR}/drupal_themes.txt.new", "w+") as file:
         for theme in themes:
             file.write("%s\n" % theme.encode("ascii", "ignore"))
     print("Drupal themes list updated!")

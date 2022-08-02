@@ -101,9 +101,8 @@ class ProxyHandler(tornado.web.RequestHandler):
         for header, value in response.headers.get_all():
             if header == "Set-Cookie":
                 self.add_header(header, value)
-            else:
-                if header not in self.restricted_response_headers:
-                    self.set_header(header, value)
+            elif header not in self.restricted_response_headers:
+                self.set_header(header, value)
         self.finish()
 
     def handle_data_chunk(self, data):
@@ -221,9 +220,8 @@ class ProxyHandler(tornado.web.RequestHandler):
                     response = yield tornado.gen.Task(async_client.fetch, request)
                 except Exception:
                     response = None
-                    pass
                 # Request retries
-                for i in range(0, 3):
+                for _ in range(3):
                     if response is None or response.code in [408, 599]:
                         self.request.response_buffer = ""
                         response = yield tornado.gen.Task(async_client.fetch, request)
@@ -424,7 +422,7 @@ class CustomWebSocketHandler(tornado.websocket.WebSocketHandler):
         :rtype: None
         """
         try:  # Cannot write binary content as a string, so catch it
-            self.handshake_request.response_buffer += ">>> {}\r\n".format(message)
+            self.handshake_request.response_buffer += f">>> {message}\r\n"
         except TypeError:
             self.handshake_request.response_buffer += ">>> May be binary\r\n"
 
@@ -438,7 +436,7 @@ class CustomWebSocketHandler(tornado.websocket.WebSocketHandler):
         :rtype: None
         """
         try:  # Cannot write binary content as a string, so catch it.
-            self.handshake_request.response_buffer += "<<< {}\r\n".format(message)
+            self.handshake_request.response_buffer += f"<<< {message}\r\n"
         except TypeError:
             self.handshake_request.response_buffer += "<<< May be binary\r\n"
 

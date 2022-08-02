@@ -3,6 +3,7 @@ owtf.net.scanner
 ~~~~~~~~~~~~~~~~
 The scan_network scans the network for different ports and call network plugins for different services running on target
 """
+
 import logging
 import re
 
@@ -16,11 +17,11 @@ from owtf.utils.file import FileOperations
 __all__ = ["Scanner"]
 
 # Folder under which all scans will be saved
-PING_SWEEP_FILE = "{}/00_ping_sweep".format(NET_SCANS_PATH)
-DNS_INFO_FILE = "{}/01_dns_info".format(NET_SCANS_PATH)
-FAST_SCAN_FILE = "{}/02_fast_scan".format(NET_SCANS_PATH)
-STD_SCAN_FILE = "{}/03_std_scan".format(NET_SCANS_PATH)
-FULL_SCAN_FILE = "{}/04_full_scan".format(NET_SCANS_PATH)
+PING_SWEEP_FILE = f"{NET_SCANS_PATH}/00_ping_sweep"
+DNS_INFO_FILE = f"{NET_SCANS_PATH}/01_dns_info"
+FAST_SCAN_FILE = f"{NET_SCANS_PATH}/02_fast_scan"
+STD_SCAN_FILE = f"{NET_SCANS_PATH}/03_std_scan"
+FULL_SCAN_FILE = f"{NET_SCANS_PATH}/04_full_scan"
 
 
 class Scanner(object):
@@ -92,9 +93,9 @@ class Scanner(object):
             if line.strip("\n"):
                 dns_server = line.strip("\n")
                 self.shell.shell_exec(
-                    "host {} {} | grep 'domain name' | cut -f 5 -d' ' | cut -f 2,3,4,5,6,7 -d. "
-                    "| sed 's/\.$//' >> {}".format(dns_server, dns_server, domain_names)
+                    f"host {dns_server} {dns_server} | grep 'domain name' | cut -f 5 -d' ' | cut -f 2,3,4,5,6,7 -d. | sed 's/\.$//' >> {domain_names}"
                 )
+
                 num_dns_servers += 1
         try:
             file = FileOperations.open(domain_names, owtf_clean=False)
@@ -176,9 +177,7 @@ class Scanner(object):
                 )
             )
             self.shell.shell_exec(
-                "amap -1 -i {}.udp.gnmap -Abq -m -o {}.udp.amap".format(
-                    file_prefix, file_prefix
-                )
+                f"amap -1 -i {file_prefix}.udp.gnmap -Abq -m -o {file_prefix}.udp.amap"
             )
 
     @staticmethod
@@ -206,8 +205,7 @@ class Scanner(object):
         f = FileOperations.open(self.get_nmap_services_file())
         for line in f.readlines():
             if line.lower().find(service) >= 0:
-                match = re.findall(regexp, line)
-                if match:
+                if match := re.findall(regexp, line):
                     port = match[0][1].split("/")[0]
                     prot = match[0][1].split("/")[1]
                     if not protocol or protocol == prot and port not in list:
@@ -260,11 +258,9 @@ class Scanner(object):
         :return: List of services
         :rtype: `list`
         """
-        services = []
         # Get all available plugins from network plugin order file
         net_plugins = get_plugins_by_group(self.session, plugin_group="network")
-        for plugin in net_plugins:
-            services.append(plugin["Name"])
+        services = [plugin["Name"] for plugin in net_plugins]
         services.append("http")
         total_tasks = 0
         tasklist = ""
@@ -309,7 +305,7 @@ class Scanner(object):
         :rtype: None
         """
         self.ping_sweep(target.split("//")[1], "full")
-        self.dns_sweep("{}.ips".format(PING_SWEEP_FILE), DNS_INFO_FILE)
+        self.dns_sweep(f"{PING_SWEEP_FILE}.ips", DNS_INFO_FILE)
 
     def probe_network(self, target, protocol, port):
         """Probe network for services
@@ -327,8 +323,9 @@ class Scanner(object):
             "{0}.ips".format(PING_SWEEP_FILE),
             FAST_SCAN_FILE,
             protocol,
-            "-p" + str(port),
+            f"-p{str(port)}",
         )
+
         return self.probe_service_for_hosts(
             "{0}.{1}.gnmap".format(FAST_SCAN_FILE, protocol), target.split("//")[1]
         )

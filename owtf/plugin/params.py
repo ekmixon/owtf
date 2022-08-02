@@ -44,7 +44,7 @@ class PluginParams(object):
         """
         self.args = defaultdict(list)
         for arg in self.raw_args:
-            if "O" == arg:
+            if arg == "O":
                 continue
             chunks = arg.split("=")
             if len(chunks) < 2:
@@ -93,9 +93,15 @@ class PluginParams(object):
         :return: Padded example
         :rtype: `str`
         """
-        args_str = []
-        for key, value in list(merge_dicts(full_args_list["mandatory"], full_args_list["Optional"]).items()):
-            args_str.append(key)
+        args_str = [
+            key
+            for key, value in list(
+                merge_dicts(
+                    full_args_list["mandatory"], full_args_list["Optional"]
+                ).items()
+            )
+        ]
+
         pad = "=? "
         return pad.join(args_str) + pad
 
@@ -261,7 +267,7 @@ class PluginParams(object):
             return self.no_args
         args_str = []
         for arg_name, arg_val in list(all_args.items()):
-            args_str.append(arg_name + "=" + str(self.args[arg_name]))
+            args_str.append(f"{arg_name}={str(self.args[arg_name])}")
             all_args[arg_name] = arg_val
         plugin["args"] = " ".join(args_str)  # Record arguments in plugin dictionary
         return [all_args]
@@ -313,8 +319,7 @@ class PluginParams(object):
         :rtype: None
         """
         for index, permutation in enumerate(permutation_list):
-            count = 0
-            for perm in permutations:
+            for count, perm in enumerate(permutations):
                 perm_args = permutation_list[index].copy()  # 1st copy by value original arguments
                 perm_args[arg_name] = perm  # 2nd override argument with permutation
                 if count == 0:  # Modify 1st existing record with permutation
@@ -322,7 +327,6 @@ class PluginParams(object):
                 else:
                     # 3rd store each subsequent permutation as a different set of args
                     permutation_list.append(perm_args)
-                count += 1
 
     def set_args(self, all_args, plugin):
         """Set args from all args for a plugin
@@ -341,9 +345,7 @@ class PluginParams(object):
         permutation_list = [args]
         for arg_name, permutations in list(self.get_permutations(args).items()):
             self.set_permutation(arg_name, permutations, permutation_list)
-        if not permutation_list:
-            return arg_list  # No permutations, return original arguments
-        return permutation_list
+        return permutation_list or arg_list
 
     def get_args(self, session, full_args_list, plugin):
         """Get args from a full list for a plugin

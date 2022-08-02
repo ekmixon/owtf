@@ -2,6 +2,7 @@
 """
 2013/05/08 - Bharadwaj Machiraju (@tunnelshade) - Initial merge script creation
 """
+
 import codecs
 import os
 
@@ -37,7 +38,10 @@ output_path = os.path.join(abs_path, "restricted", "combined")
 
 # Two files will be formed
 for case in ["lowercase", "mixedcase"]:
-    f = codecs.open(os.path.join(output_path, "combined_%s.txt" % case), "w", "UTF-8")
+    f = codecs.open(
+        os.path.join(output_path, f"combined_{case}.txt"), "w", "UTF-8"
+    )
+
     merged_list = {}
 
     # The svndigger list is added at the beginning
@@ -57,7 +61,12 @@ for case in ["lowercase", "mixedcase"]:
     f.close()
 
     # Prepare filtered version for using with dirbuster
-    f = codecs.open(os.path.join(output_path, "filtered_combined_%s.txt" % case), "w", "UTF-8")
-    for line in codecs.open(os.path.join(output_path, "combined_%s.txt" % case), "r", "UTF-8").readlines():
+    f = codecs.open(
+        os.path.join(output_path, f"filtered_combined_{case}.txt"),
+        "w",
+        "UTF-8",
+    )
+
+    for line in codecs.open(os.path.join(output_path, f"combined_{case}.txt"), "r", "UTF-8").readlines():
         f.write(quote_plus(line.encode("utf-8"), "./\r\n"))
     f.close()

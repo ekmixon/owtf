@@ -37,11 +37,11 @@ class SMTP(object):
         try:
             mail_server.starttls()  # Give start TLS a shot
         except Exception as e:
-            self.pprint("{} - Assuming TLS unsupported and trying to continue..".format(str(e)))
+            self.pprint(f"{str(e)} - Assuming TLS unsupported and trying to continue..")
         try:
             mail_server.login(options["SMTP_LOGIN"], options["SMTP_PASS"])
         except Exception as e:
-            self.pprint("ERROR: {} - Assuming open-relay and trying to continue..".format(str(e)))
+            self.pprint(f"ERROR: {str(e)} - Assuming open-relay and trying to continue..")
         return mail_server
 
     def is_file(self, target):
@@ -52,11 +52,11 @@ class SMTP(object):
 
     def build_target_list(self, options):
         """Build a list of targets for simplification purposes."""
-        if self.is_file(options["EMAIL_TARGET"]):
-            target_list = self.get_file_content_as_list(options)
-        else:
-            target_list = [options["EMAIL_TARGET"]]
-        return target_list
+        return (
+            self.get_file_content_as_list(options)
+            if self.is_file(options["EMAIL_TARGET"])
+            else [options["EMAIL_TARGET"]]
+        )
 
     def send(self, options):
         num_errors = 0
@@ -69,7 +69,7 @@ class SMTP(object):
                 message = self.build_message(options, target)
                 mail_server = self.connect(options)
                 if mail_server is None:
-                    raise Exception("Error connecting to {}".format(str(target)))
+                    raise Exception(f"Error connecting to {str(target)}")
                 mail_server.sendmail(options["SMTP_LOGIN"], target, message.as_string())
                 self.pprint("Email relay successful!")
             except Exception as e:
@@ -115,7 +115,11 @@ class SMTP(object):
         binary_blob.set_payload(FileOperations.open(attachment, "rb").read())
         encoders.encode_base64(binary_blob)  # base64 encode the Binary Blob.
         # Binary Blob headers.
-        binary_blob.add_header("Content-Disposition", 'attachment; filename="{}"'.format(os.path.basename(attachment)))
+        binary_blob.add_header(
+            "Content-Disposition",
+            f'attachment; filename="{os.path.basename(attachment)}"',
+        )
+
         message.attach(binary_blob)
         return True
 

@@ -5,6 +5,7 @@ owtf.utils.error
 The error handler provides a centralised control for aborting the application
 and logging errors for debugging later.
 """
+
 import logging
 import multiprocessing
 import signal
@@ -32,8 +33,8 @@ __all__ = [
 
 command = None
 len_padding = 100
-padding = "\n{}\n\n".format("_" * len_padding)
-sub_padding = "\n{}\n".format("*" * len_padding)
+padding = f'\n{"_" * len_padding}\n\n'
+sub_padding = f'\n{"*" * len_padding}\n'
 
 
 def abort_framework(message):
@@ -77,7 +78,8 @@ def user_abort(level, partial_output=""):
     """
     # Levels so far can be Command or Plugin
     logging.info("\nThe %s was aborted by the user: Please check the report and plugin output files", level)
-    message = ("\nThe {} was aborted by the user: Please check the report and plugin output files".format(level))
+    message = f"\nThe {level} was aborted by the user: Please check the report and plugin output files"
+
     if level == "Command":
         option = "p"
         if option == "e":
@@ -108,7 +110,7 @@ class SentryProxy(object):
 def get_sentry_client(sentry_key=SENTRY_API_KEY):
     if sentry_key and raven_installed:
         logging.info("[+] Sentry client setup key: %s", sentry_key)
-        sentry_client = SentryProxy(sentry_client=AsyncSentryClient(sentry_key))
+        return SentryProxy(sentry_client=AsyncSentryClient(sentry_key))
     else:
         if not sentry_key:
             logging.info("[-] No Sentry key specified")
@@ -116,9 +118,7 @@ def get_sentry_client(sentry_key=SENTRY_API_KEY):
         if not raven_installed:
             logging.info("[-] Raven (sentry client) not installed")
 
-        sentry_client = SentryProxy(sentry_client=None)
-
-    return sentry_client
+        return SentryProxy(sentry_client=None)
 
 
 def log_and_exit_handler(signum, frame):

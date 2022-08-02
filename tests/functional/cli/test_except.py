@@ -18,16 +18,16 @@ class OWTFCliExceptTest(OWTFCliTestCase):
             "web",
             "-e",
             "OWTF-WVS-006",
-            "%s://%s:%s" % (self.PROTOCOL, self.IP, self.PORT),
+            f"{self.PROTOCOL}://{self.IP}:{self.PORT}",
         )
+
         self.assert_is_in_logs(
             "All jobs have been done. Exiting.",
             name="MainProcess",
             msg="OWTF did not finish properly!",
         )
         self.assert_is_not_in_logs(
-            "Target: %s://%s:%s -> Plugin: Skipfish Unauthenticated"
-            % (self.PROTOCOL, self.IP, self.PORT),
+            f"Target: {self.PROTOCOL}://{self.IP}:{self.PORT} -> Plugin: Skipfish Unauthenticated",
             name="Worker",
             msg="Skipfish plugin should not have been run!",
         )

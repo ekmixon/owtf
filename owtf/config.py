@@ -46,10 +46,7 @@ class Config(object):
         """
         key = self.pad_key(key)
         config = self.get_config_dict
-        for type in CONFIG_TYPES:
-            if key in config[type]:
-                return True
-        return False
+        return any(key in config[type] for type in CONFIG_TYPES)
 
     def get_key_val(self, key):
         """Gets the right config for target / general.
@@ -94,7 +91,7 @@ class Config(object):
             key = self.pad_key(key)
             return self.get_key_val(key)
         except KeyError:
-            message = "The configuration item: %s does not exist!" % key
+            message = f"The configuration item: {key} does not exist!"
             # Raise plugin-level exception to move on to next plugin.
             raise PluginAbortException(message)
 
@@ -106,10 +103,7 @@ class Config(object):
         :return: List of corresponding values
         :rtype: `list`
         """
-        value_list = []
-        for key in key_list:
-            value_list.append(self.get_val(key))
-        return value_list
+        return [self.get_val(key) for key in key_list]
 
     def get_header_list(self, key):
         """Get list from a string of values for a key
@@ -140,10 +134,7 @@ class Config(object):
         # Store config in "replacement mode", that way we can multiple-replace
         # the config on resources, etc.
         key = REPLACEMENT_DELIMITER + key + REPLACEMENT_DELIMITER
-        type = "other"
-        # Only when value is a string, store in replacements config.
-        if isinstance(value, str):
-            type = "string"
+        type = "string" if isinstance(value, str) else "other"
         return self.set_general_val(type, key, value)
 
     @property

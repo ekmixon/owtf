@@ -25,9 +25,7 @@ def derive_http_method(method, data):
     d_method = method
     # Method not provided: Determine method from params
     if d_method is None or d_method == "":
-        d_method = "GET"
-        if data != "" and data is not None:
-            d_method = "POST"
+        d_method = "POST" if data != "" and data is not None else "GET"
     return d_method
 
 

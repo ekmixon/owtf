@@ -48,10 +48,7 @@ class ConsoleFormatter(logging.Formatter):
         elif record.levelno == logging.WARN:
             record.msg = self.warn_fmt.format(record.msg)
 
-        # Call the original formatter class to do the grunt work
-        result = super(ConsoleFormatter, self).format(record)
-
-        return result
+        return super(ConsoleFormatter, self).format(record)
 
 
 class FileFormatter(logging.Formatter):

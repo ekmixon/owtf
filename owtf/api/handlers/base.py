@@ -159,9 +159,7 @@ class APIRequestHandler(BaseRequestHandler):
         """Get the authorization token from Authorization header"""
         auth_header = self.request.headers.get("Authorization", "")
         match = auth_header_pat.match(auth_header)
-        if not match:
-            return None
-        return match.group(1)
+        return match.group(1) if match else None
 
 
 class UIRequestHandler(BaseRequestHandler):
@@ -181,13 +179,9 @@ class UIRequestHandler(BaseRequestHandler):
         if self.request.protocol == "https":
             kwargs["secure"] = True
         kwargs["domain"] = SERVER_ADDR
-        kwargs.update(overrides)
+        kwargs |= overrides
 
-        if encrypted:
-            set_cookie = self.set_secure_cookie
-        else:
-            set_cookie = self.set_cookie
-
+        set_cookie = self.set_secure_cookie if encrypted else self.set_cookie
         self.application.log.debug("Setting cookie %s: %s", key, kwargs)
         set_cookie(key, value, **kwargs)
 
@@ -221,9 +215,7 @@ class FileRedirectHandler(BaseRequestHandler):
     SUPPORTED_METHODS = ["GET"]
 
     def get(self, file_url):
-        output_files_server = "{}://{}/".format(
-            self.request.protocol,
-            self.request.host.replace(str(SERVER_PORT), str(FILE_SERVER_PORT)),
-        )
+        output_files_server = f"{self.request.protocol}://{self.request.host.replace(str(SERVER_PORT), str(FILE_SERVER_PORT))}/"
+
         redirect_file_url = output_files_server + url_escape(file_url, plus=False)
         self.redirect(redirect_file_url, permanent=True)

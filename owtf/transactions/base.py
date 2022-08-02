@@ -89,9 +89,7 @@ class HTTPTransaction(object):
         """
         if self.url != response.url:
             if response.code not in [302, 301]:  # No way, error in hook.
-                # Mark as a redirect, dirty but more accurate than 200 :P
-                self.status = "302 Found"
-                self.status += " --Redirect--> {!s} ".format(response.code)
+                self.status = "302 Found" + " --Redirect--> {!s} ".format(response.code)
                 self.status += response.msg
             # Redirect differs in schema (i.e. https instead of http).
             if self.url.split(":")[0] != response.url.split(":")[0]:
@@ -173,8 +171,11 @@ class HTTPTransaction(object):
         """
         cookies = []
         try:  # parsing may sometimes fail
-            for cookie in self.cookies_list:
-                cookies.append(Cookie.from_string(cookie).to_dict())
+            cookies.extend(
+                Cookie.from_string(cookie).to_dict()
+                for cookie in self.cookies_list
+            )
+
         except InvalidCookieError:
             logging.debug("Cannot not parse the cookies")
         return cookies
@@ -227,8 +228,8 @@ class HTTPTransaction(object):
         :return: Formatted HTML link
         :rtype: `str`
         """
-        if "" == link_name:
-            link_name = "Transaction {}".format(self.id)
+        if link_name == "":
+            link_name = f"Transaction {self.id}"
         return self.html_link_id.replace("@@@PLACE_HOLDER@@@", link_name)
 
     def get_raw(self):
@@ -237,7 +238,7 @@ class HTTPTransaction(object):
         :return: Raw string with response and request
         :rtype: `str`
         """
-        return "{}\n\n{}".format(self.get_raw_request, self.get_raw_response())
+        return f"{self.get_raw_request}\n\n{self.get_raw_response()}"
 
     @property
     def get_raw_request(self):
@@ -275,9 +276,10 @@ class HTTPTransaction(object):
         :rtype: `str`
         """
         try:
-            return "{}\r\n{}\n\n{}".format(self.get_status, str(self.response_headers), self.response_contents)
+            return f"{self.get_status}\r\n{str(self.response_headers)}\n\n{self.response_contents}"
+
         except UnicodeDecodeError:
-            return "{}\r\n{}\n\n[Binary Content]".format(self.get_status, str(self.response_headers))
+            return f"{self.get_status}\r\n{str(self.response_headers)}\n\n[Binary Content]"
 
     @property
     def get_raw_response_body(self):

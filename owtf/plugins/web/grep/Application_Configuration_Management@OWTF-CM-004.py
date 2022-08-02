@@ -16,5 +16,4 @@ def run(PluginInfo):
         "RESPONSE_REGEXP_FOR_PHP_SOURCE",
         "RESPONSE_REGEXP_FOR_ASP_SOURCE",
     ]
-    Content = plugin_helper.FindResponseBodyMatchesForRegexpNames(regexes)
-    return Content
+    return plugin_helper.FindResponseBodyMatchesForRegexpNames(regexes)

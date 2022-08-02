@@ -47,8 +47,7 @@ def plugin_count_output(session):
     complete_count = get_count(session.query(PluginOutput))
     left_count = get_count(session.query(Work))
     left_count += worker_manager.get_busy_workers()
-    results = {"complete_count": complete_count, "left_count": left_count}
-    return results
+    return {"complete_count": complete_count, "left_count": left_count}
 
 
 def poutput_gen_query(session, filter_data, target_id, for_delete=False):
@@ -116,12 +115,14 @@ def poutput_gen_query(session, filter_data, target_id, for_delete=False):
     if not for_delete:
         query = query.order_by(PluginOutput.plugin_key.asc())
     try:
-        if filter_data.get("offset", None):
-            if isinstance(filter_data.get("offset"), list):
-                query = query.offset(int(filter_data["offset"][0]))
-        if filter_data.get("limit", None):
-            if isinstance(filter_data.get("limit"), list):
-                query = query.limit(int(filter_data["limit"][0]))
+        if filter_data.get("offset", None) and isinstance(
+            filter_data.get("offset"), list
+        ):
+            query = query.offset(int(filter_data["offset"][0]))
+        if filter_data.get("limit", None) and isinstance(
+            filter_data.get("limit"), list
+        ):
+            query = query.limit(int(filter_data["limit"][0]))
     except ValueError:
         raise InvalidParameterType("Integer has to be provided for integer fields")
     return query
@@ -156,7 +157,7 @@ def get_unique_dicts(session, target_id=None):
     :return: Results
     :rtype: `dict`
     """
-    unique_data = {
+    return {
         "plugin_type": [
             i[0]
             for i in session.query(PluginOutput.plugin_type)
@@ -193,7 +194,6 @@ def get_unique_dicts(session, target_id=None):
             .all()
         ],
     }
-    return unique_data
 
 
 @target_required
@@ -249,8 +249,7 @@ def update_poutput(
         "plugin_code": plugin_code,
     }
     query = poutput_gen_query(session, plugin_dict, target_id)
-    obj = query.first()
-    if obj:
+    if obj := query.first():
         try:
             if patch_data.get("user_rank", None):
                 if isinstance(patch_data["user_rank"], list):
@@ -388,22 +387,19 @@ def get_severity_freq(session, session_id=None):
         {"id": 5, "label": "Critical", "value": 0},
     ]
 
-    targets = []
     target_objs = (
         session.query(Target.id).filter(Target.sessions.any(id=session_id)).all()
     )
-    for target_obj in target_objs:
-        targets.append(target_obj.id)
-
+    targets = [target_obj.id for target_obj in target_objs]
     plugin_objs = session.query(PluginOutput).all()
 
     for plugin_obj in plugin_objs:
         if plugin_obj.target_id in targets:
-            if plugin_obj.user_rank != -1:
-                severity_frequency[plugin_obj.user_rank]["value"] += 1
-            else:
+            if plugin_obj.user_rank == -1:
                 if plugin_obj.owtf_rank != -1:
                     # Removing the not ranked plugins
                     severity_frequency[plugin_obj.owtf_rank]["value"] += 1
 
+            else:
+                severity_frequency[plugin_obj.user_rank]["value"] += 1
     return {"data": severity_frequency[::-1]}

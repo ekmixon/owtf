@@ -30,12 +30,11 @@ def load_config_file(file_path, fallback_file_path):
     logging.info("Loading %s..", file_path)
     if not os.path.isfile(file_path):
         # check if the config file exists
-        abort_framework("Config file not found at: {}".format(file_path))
+        abort_framework(f"Config file not found at: {file_path}")
     try:
-        config_map = yaml.load(FileOperations.open(file_path, "r"))
-        return config_map
+        return yaml.load(FileOperations.open(file_path, "r"))
     except yaml.YAMLError:
-        abort_framework("Error parsing config file at: {}".format(file_path))
+        abort_framework(f"Error parsing config file at: {file_path}")
 
 
 def load_general_config(session, default, fallback):
@@ -96,7 +95,6 @@ def load_framework_config(default, fallback, root_dir, owtf_pid):
                 )
             except KeyError as e:
                 logging.debug("Exception while parsing framework config: %s", str(e))
-                pass
 
 
 def config_gen_query(session, criteria):
@@ -164,16 +162,14 @@ def update_config_val(session, key, value):
     :return: None
     :rtype: None
     """
-    config_obj = session.query(Config).get(key)
-    if config_obj:
-        config_obj.value = value
-        config_obj.dirty = True
-        session.merge(config_obj)
-        session.commit()
-    else:
+    if not (config_obj := session.query(Config).get(key)):
         raise InvalidConfigurationReference(
             "No setting exists with key: {!s}".format(key)
         )
+    config_obj.value = value
+    config_obj.dirty = True
+    session.merge(config_obj)
+    session.commit()
 
 
 def get_conf(session):
@@ -182,8 +178,5 @@ def get_conf(session):
     :return: Replaced dict
     :rtype: `dict`
     """
-    config_dict = {}
     config_list = session.query(Config.key, Config.value).all()
-    for key, value in config_list:  # Need a dict
-        config_dict[key] = value
-    return config_dict
+    return dict(config_list)

@@ -57,8 +57,7 @@ class Target(Model):
 
     @classmethod
     def get_indexed(cls, session):
-        results = session.query(Target.id, Target.target_url).all()
-        return results
+        return session.query(Target.id, Target.target_url).all()
 
     def __repr__(self):
         return "<Target (url='{!s}')>".format(self.target_url)

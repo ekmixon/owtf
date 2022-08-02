@@ -55,9 +55,8 @@ class Transaction(Model):
             tdict.pop("raw_request", None)
             tdict.pop("response_headers", None)
             tdict.pop("response_body", None)
-        else:
-            if tdict["binary_response"]:
-                tdict["response_body"] = base64.b64encode(str(tdict["response_body"]))
+        elif tdict["binary_response"]:
+            tdict["response_body"] = base64.b64encode(str(tdict["response_body"]))
         return tdict
 
     def __repr__(self):

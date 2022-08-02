@@ -81,8 +81,7 @@ class TransactionLogger(OWTFProcess):
         :rtype: `dict`
         """
         transactions_dict = None
-        target_list = Target.get_indexed(self.session)
-        if target_list:  # If there are no targets in db, where are we going to add. OMG
+        if target_list := Target.get_indexed(self.session):
             transactions_dict = {}
             host_list = get_all_in_scope("host_name")
 
@@ -125,8 +124,7 @@ class TransactionLogger(OWTFProcess):
             while self.poison_q.empty():
                 if glob.glob(os.path.join(INBOUND_PROXY_CACHE_DIR, "*.rd")):
                     hash_list = self.get_hash_list(INBOUND_PROXY_CACHE_DIR)
-                    transactions_dict = self.get_owtf_transactions(hash_list)
-                    if transactions_dict:  # Make sure you do not have None
+                    if transactions_dict := self.get_owtf_transactions(hash_list):
                         log_transactions_from_logger(transactions_dict)
                 else:
                     time.sleep(2)
@@ -142,4 +140,3 @@ def start_transaction_logger():
         transaction_logger.start()
     except Exception as exc:
         logging.debug(str(exc))
-        pass

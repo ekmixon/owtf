@@ -143,11 +143,11 @@ class PluginRunner(object):
         if num_items == 0:
             return -1  # List is empty
         for index in range((num_items - 1), -1, -1):
-            match = True
-            # Compare all execution log values against the passed Plugin, if all match, return index to log record
-            for k, v in list(exec_log[index].items()):
-                if k not in plugin or plugin[k] != v:
-                    match = False
+            match = not any(
+                k not in plugin or plugin[k] != v
+                for k, v in list(exec_log[index].items())
+            )
+
             if match:
                 return index
         return -1
@@ -296,9 +296,10 @@ class PluginRunner(object):
         if not self.chosen_plugin(session=session, plugin=plugin, show_reason=show_reason):
             return False  # Skip not chosen plugins
         # Grep plugins to be always run and overwritten (they run once after semi_passive and then again after active)
-        if (
-            plugin_already_run(session=session, plugin_info=plugin)
-            and ((not self.force_overwrite and not ("grep" == plugin["type"])) or plugin["type"] == "external")
+        if plugin_already_run(session=session, plugin_info=plugin) and (
+            not self.force_overwrite
+            and plugin["type"] != "grep"
+            or plugin["type"] == "external"
         ):
             if show_reason:
                 logging.warning(
@@ -308,10 +309,9 @@ class PluginRunner(object):
                     plugin["type"],
                 )
             return False
-        if "grep" == plugin["type"] and plugin_already_run(session=session, plugin_info=plugin):
-            # Grep plugins can only run if some active or semi_passive plugin was run since the last time
-            return False
-        return True
+        return plugin["type"] != "grep" or not plugin_already_run(
+            session=session, plugin_info=plugin
+        )
 
     def get_plugin_full_path(self, plugin_dir, plugin):
         """Get full path to the plugin
@@ -339,8 +339,7 @@ class PluginRunner(object):
         """
         plugin_path = self.get_plugin_full_path(plugin_dir, plugin)
         path, name = os.path.split(plugin_path)
-        plugin_output = self.get_module("", name, path + "/").run(plugin)
-        return plugin_output
+        return self.get_module("", name, f"{path}/").run(plugin)
 
     @staticmethod
     def rank_plugin(output, pathname):
@@ -428,7 +427,7 @@ class PluginRunner(object):
         if self.simulation:
             return None
         # DB empty => grep plugins will fail, skip!!
-        if "grep" == plugin["type"] and num_transactions(session) == 0:
+        if plugin["type"] == "grep" and num_transactions(session) == 0:
             logging.info("Skipped - Cannot run grep plugins: The Transaction DB is empty")
             return None
         output = None
@@ -501,7 +500,7 @@ class PluginRunner(object):
         :return: Path to the output dir for plugin group
         :rtype: `str`
         """
-        return "{}/{}".format(PLUGINS_DIR, plugin_group)
+        return f"{PLUGINS_DIR}/{plugin_group}"
 
     # TODO(viyatb): Make this run for normal plugin runs
     # This is not called anywhere - why? Seems it was always broken.
@@ -538,9 +537,14 @@ class PluginRunner(object):
                             self.process_plugins_for_target_list(
                                 session,
                                 "web",
-                                {"SomeAborted": False, "SomeSuccessful": False, "AllSkipped": True},
-                                {"https://{}".format(target.split("//")[1])},
+                                {
+                                    "SomeAborted": False,
+                                    "SomeSuccessful": False,
+                                    "AllSkipped": True,
+                                },
+                                {f'https://{target.split("//")[1]}'},
                             )
+
                         else:
                             self.process_plugins_for_target_list(
                                 session,
@@ -548,8 +552,6 @@ class PluginRunner(object):
                                 {"SomeAborted": False, "SomeSuccessful": False, "AllSkipped": True},
                                 {target},
                             )
-        else:
-            pass
 
 
 def show_plugin_list(session, group, msg=INTRO_BANNER_GENERAL):

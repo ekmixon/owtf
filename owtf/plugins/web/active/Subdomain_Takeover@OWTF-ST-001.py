@@ -9,7 +9,6 @@ DESCRIPTION = "Active plugin which Test for Subdomain Takeover"
 
 def run(PluginInfo):
     resource = get_resources("SubdomainTakeover")
-    Content = plugin_helper.CommandDump(
+    return plugin_helper.CommandDump(
         "Test Command", "Output", resource, PluginInfo, []
     )
-    return Content

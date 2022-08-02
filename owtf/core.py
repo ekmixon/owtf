@@ -116,7 +116,7 @@ def process_options(user_args):
         valid_types = Plugin.get_all_plugin_types(db) + ["all", "quiet"]
         arg = parse_options(user_args, valid_groups, valid_types)
     except KeyboardInterrupt as e:
-        usage("Invalid OWTF option(s) {}".format(e))
+        usage(f"Invalid OWTF option(s) {e}")
         sys.exit(0)
     except SystemExit:
         # --help triggers the SystemExit exception, catch it and exit
@@ -148,21 +148,16 @@ def process_options(user_args):
 
                 TOR_manager.msg_configure_tor()
                 exit(0)
-            if len(arg.tor_mode) == 1:
-                if arg.tor_mode[0] != "help":
-                    usage("Invalid argument for TOR-mode")
-            elif len(arg.tor_mode) != 5:
+            if (
+                len(arg.tor_mode) == 1
+                and arg.tor_mode[0] != "help"
+                or len(arg.tor_mode) not in [1, 5]
+            ):
                 usage("Invalid argument for TOR-mode")
-            else:
+            elif len(arg.tor_mode) != 1:
                 # Enables outbound_proxy.
-                if arg.tor_mode[0] == "":
-                    outbound_proxy_ip = "127.0.0.1"
-                else:
-                    outbound_proxy_ip = arg.tor_mode[0]
-                if arg.tor_mode[1] == "":
-                    outbound_proxy_port = "9050"  # default TOR port
-                else:
-                    outbound_proxy_port = arg.tor_mode[1]
+                outbound_proxy_ip = "127.0.0.1" if arg.tor_mode[0] == "" else arg.tor_mode[0]
+                outbound_proxy_port = "9050" if arg.tor_mode[1] == "" else arg.tor_mode[1]
                 arg.outbound_proxy = "socks://{0}:{1}".format(
                     outbound_proxy_ip, outbound_proxy_port
                 )
@@ -178,25 +173,25 @@ def process_options(user_args):
             else:
                 arg.outbound_proxy = arg.outbound_proxy.pop().split(":")
             # outbound_proxy should be type://ip:port
-            if len(arg.outbound_proxy) not in [2, 3]:
-                usage("Invalid argument for outbound proxy")
-            else:  # Check if the port is an int.
+            if len(arg.outbound_proxy) in {2, 3}:  # Check if the port is an int.
                 try:
                     int(arg.outbound_proxy[-1])
                 except ValueError:
                     usage("Invalid port provided for Outbound Proxy")
 
+            else:
+                usage("Invalid argument for outbound proxy")
         if arg.inbound_proxy:
             arg.inbound_proxy = arg.inbound_proxy.split(":")
             # inbound_proxy should be (ip:)port:
-            if len(arg.inbound_proxy) not in [1, 2]:
-                usage("Invalid argument for Inbound Proxy")
-            else:
+            if len(arg.inbound_proxy) in {1, 2}:
                 try:
                     int(arg.inbound_proxy[-1])
                 except ValueError:
                     usage("Invalid port for Inbound Proxy")
 
+            else:
+                usage("Invalid argument for Inbound Proxy")
         plugin_types_for_group = get_types_for_plugin_group(db, plugin_group)
         if arg.plugin_type == "all":
             arg.plugin_type = plugin_types_for_group
@@ -213,17 +208,15 @@ def process_options(user_args):
                 logging.info("Scope file: trying to load targets from it ..")
                 new_scope = []
                 for target in open(scope[0]).read().split("\n"):
-                    clean_target = target.strip()
-                    if not clean_target:
-                        continue  # Skip blank lines
-                    new_scope.append(clean_target)
-                if len(new_scope) == 0:  # Bad file
+                    if clean_target := target.strip():
+                        new_scope.append(clean_target)
+                if not new_scope:  # Bad file
                     usage("Please provide a scope file (1 target x line)")
                 scope = new_scope
 
         for target in scope:
             if target[0] == "-":
-                usage("Invalid Target: {}".format(target))
+                usage(f"Invalid Target: {target}")
 
         args = ""
         if plugin_group == "auxiliary":
@@ -301,7 +294,7 @@ def init(args):
 @workers_finish.connect
 def finish(sender=None, **kwargs):
     if sender:
-        logging.debug("[{}]: sent the signal".format(sender))
+        logging.debug(f"[{sender}]: sent the signal")
     global owtf_pid
     _signal_process(pid=owtf_pid, psignal=signal.SIGINT)
 

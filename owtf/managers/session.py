@@ -50,15 +50,14 @@ def add_session(session, session_name):
     :rtype: None
     """
     existing_obj = session.query(Session).filter_by(name=session_name).first()
-    if existing_obj is None:
-        session_obj = Session(name=session_name[:50])
-        session.add(session_obj)
-        session.commit()
-        Session.set_by_id(session, session_obj.id)
-    else:
+    if existing_obj is not None:
         raise exceptions.DBIntegrityException(
             "Session already exists with session name: {!s}".format(session_name)
         )
+    session_obj = Session(name=session_name[:50])
+    session.add(session_obj)
+    session.commit()
+    Session.set_by_id(session, session_obj.id)
 
 
 @session_required
@@ -169,8 +168,4 @@ def get_all_session_dicts(session, filter_data):
     :rtype: `dict`
     """
     session_objs = session_generate_query(session, filter_data).all()
-    results = []
-    for session_obj in session_objs:
-        if session_obj:
-            results.append(session_obj.to_dict())
-    return results
+    return [session_obj.to_dict() for session_obj in session_objs if session_obj]

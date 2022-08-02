@@ -130,7 +130,7 @@ class CacheHandler(object):
 
         # This approach can be used as an alternative for object sharing
         # This creates a file with hash as name and .rd as extension
-        open("{}.rd".format(self.file_path), "w").close()
+        open(f"{self.file_path}.rd", "w").close()
         self.file_lock.release()
 
     def load(self):
@@ -147,18 +147,17 @@ class CacheHandler(object):
         finally:
             if os.path.isfile(self.file_path):
                 return self.create_response_object()
+            self.file_lock = FileLock(self.file_path)
+            try:
+                self.file_lock.acquire()
+            except FileLockTimeoutException:
+                logging.debug("Lock could not be acquired %s", traceback.print_exc)
+            # For handling race conditions
+            if os.path.isfile(self.file_path):
+                self.file_lock.release()
+                return self.create_response_object()
             else:
-                self.file_lock = FileLock(self.file_path)
-                try:
-                    self.file_lock.acquire()
-                except FileLockTimeoutException:
-                    logging.debug("Lock could not be acquired %s", traceback.print_exc)
-                # For handling race conditions
-                if os.path.isfile(self.file_path):
-                    self.file_lock.release()
-                    return self.create_response_object()
-                else:
-                    return None
+                return None
 
 
 class DummyObject(object):

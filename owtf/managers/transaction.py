@@ -37,10 +37,9 @@ def num_transactions(session, scope=True, target_id=None):
     :return: Number of transactions in scope
     :rtype: `int`
     """
-    count = get_count(
+    return get_count(
         session.query(Transaction).filter_by(scope=scope, target_id=target_id)
     )
-    return count
 
 
 @target_required
@@ -262,7 +261,7 @@ def get_transaction_model(transaction):
         response_body = base64.b64encode(transaction.get_raw_response_body)
         binary_response = True
     finally:
-        transaction_model = Transaction(
+        return Transaction(
             url=transaction.url,
             scope=transaction.in_scope,
             method=transaction.method,
@@ -274,11 +273,12 @@ def get_transaction_model(transaction):
             response_status=transaction.get_status,
             response_headers=transaction.get_response_headers,
             response_body=response_body,
-            response_size=len(response_body) if response_body is not None else 0,
+            response_size=len(response_body)
+            if response_body is not None
+            else 0,
             binary_response=binary_response,
             session_tokens=json.dumps(transaction.get_session_tokens()),
         )
-        return transaction_model
 
 
 @target_required
@@ -320,9 +320,7 @@ def log_transactions(session, transaction_list, target_id=None):
         # + Transaction must not have a binary response
         # + Transaction must be in scope
         if (not transaction_model.binary_response) and (transaction_model.scope):
-            # Get the grep results
-            grep_outputs = grep_transaction(owtf_transaction)
-            if grep_outputs:  # If valid grep results exist
+            if grep_outputs := grep_transaction(owtf_transaction):
                 # Iterate over regex_name and regex results
                 for regex_name, regex_results in grep_outputs.items():
                     # Then iterate over the results to store each result in
@@ -332,11 +330,15 @@ def log_transactions(session, transaction_list, target_id=None):
                     for match in regex_results:
                         # Convert the match to json
                         match = json.dumps(match)
-                        # Fetch if any existing entry
-                        existing_grep_output = session.query(GrepOutput).filter_by(
-                            target_id=target_id, name=regex_name, output=match
-                        ).first()
-                        if existing_grep_output:
+                        if (
+                            existing_grep_output := session.query(GrepOutput)
+                            .filter_by(
+                                target_id=target_id,
+                                name=regex_name,
+                                output=match,
+                            )
+                            .first()
+                        ):
                             existing_grep_output.transactions.append(transaction_model)
                             session.merge(existing_grep_output)
                         else:
@@ -430,8 +432,7 @@ def get_transactions_by_id(id_list):
     """
     model_objs = []
     for id in id_list:
-        model_obj = get_transaction_by_id(id)
-        if model_obj:
+        if model_obj := get_transaction_by_id(id):
             model_objs.append(model_obj)
     return get_transactions(model_objs)
 
@@ -512,7 +513,7 @@ def grep_transaction(owtf_transaction):
     """
     grep_output = {}
     for regex_name, regex in list(regexes["HEADERS"].items()):
-        grep_output.update(grep_response_headers(regex_name, regex, owtf_transaction))
+        grep_output |= grep_response_headers(regex_name, regex, owtf_transaction)
     for regex_name, regex in list(regexes["BODY"].items()):
         grep_output.update(grep_response_body(regex_name, regex, owtf_transaction))
     return grep_output
@@ -563,7 +564,7 @@ def grep(regex_name, regex, data):
     results = regex.findall(data)
     output = {}
     if results:
-        output.update({regex_name: results})
+        output[regex_name] = results
     return output
 
 
@@ -595,19 +596,17 @@ def search_by_regex_name(session, regex_name, stats=False, target_id=None):
     ).all()
     grep_outputs = [i[0] for i in grep_outputs]
     # Get one transaction per match
-    transaction_ids = []
-    for grep_output in grep_outputs:
-        transaction_ids.append(
-            session.query(Transaction.id).join(Transaction.grep_outputs).filter(
-                GrepOutput.output == grep_output, GrepOutput.target_id == target_id
-            ).limit(
-                1
-            ).all()[
-                0
-            ][
-                0
-            ]
+    transaction_ids = [
+        session.query(Transaction.id)
+        .join(Transaction.grep_outputs)
+        .filter(
+            GrepOutput.output == grep_output, GrepOutput.target_id == target_id
         )
+        .limit(1)
+        .all()[0][0]
+        for grep_output in grep_outputs
+    ]
+
     # Calculate stats if needed
     if stats:
         # Calculate the total number of matches
@@ -660,11 +659,12 @@ def search_by_regex_names(name_list, stats=False, target_id=None):
     :rtype: `list`
     """
     session = get_scoped_session()
-    results = [
-        search_by_regex_name(session, regex_name, stats=stats, target_id=target_id)
+    return [
+        search_by_regex_name(
+            session, regex_name, stats=stats, target_id=target_id
+        )
         for regex_name in name_list
     ]
-    return results
 
 
 def get_transaction_dicts(tdb_obj_list, include_raw_data=False):
@@ -703,12 +703,13 @@ def search_all_transactions(session, criteria, target_id=None, include_raw_data=
     filtered_number = get_count(
         transaction_gen_query(session, criteria, target_id, for_stats=True)
     )
-    results = {
+    return {
         "records_total": total,
         "records_filtered": filtered_number,
-        "data": get_transaction_dicts(filtered_transaction_objs, include_raw_data),
+        "data": get_transaction_dicts(
+            filtered_transaction_objs, include_raw_data
+        ),
     }
-    return results
 
 
 @target_required
@@ -742,14 +743,16 @@ def get_by_id_as_dict(session, trans_id, target_id=None):
     :return: transaction object as dict
     :rtype: `dict`
     """
-    transaction_obj = session.query(Transaction).filter_by(
-        target_id=target_id, id=trans_id
-    ).first()
-    if not transaction_obj:
+    if (
+        transaction_obj := session.query(Transaction)
+        .filter_by(target_id=target_id, id=trans_id)
+        .first()
+    ):
+        return transaction_obj.to_dict(include_raw_data=True)
+    else:
         raise InvalidTransactionReference(
             "No transaction with {!s} exists".format(trans_id)
         )
-    return transaction_obj.to_dict(include_raw_data=True)
 
 
 @target_required
@@ -774,15 +777,11 @@ def get_hrt_response(session, filter_data, trans_id, target_id=None):
     if filter_data.get("language"):
         languages = [x.strip() for x in filter_data["language"]]
 
-    proxy = None
     search_string = None
-    data = None
-    if filter_data.get("proxy"):
-        proxy = filter_data["proxy"][0]
+    proxy = filter_data["proxy"][0] if filter_data.get("proxy") else None
     if filter_data.get("search_string"):
         search_string = filter_data["search_string"][0]
-    if filter_data.get("data"):
-        data = filter_data["data"][0]
+    data = filter_data["data"][0] if filter_data.get("data") else None
     # If target not found. Raise error.
     if not transaction_obj:
         raise InvalidTransactionReference(
@@ -798,7 +797,7 @@ def get_hrt_response(session, filter_data, trans_id, target_id=None):
             data=data,
         )
         codes = hrt_obj.generate_code()
-        return "".join(v for v in list(codes.values()))
+        return "".join(list(codes.values()))
     except Exception as e:
         logging.error("Unexpected exception when running HRT: $s", str(e))
         return str(e)

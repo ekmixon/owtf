@@ -172,10 +172,9 @@ def get_output_dir():
     output_dir = os.path.expanduser(OUTPUT_PATH)
     if not os.path.isabs(output_dir) and directory_access(os.getcwd(), "w+"):
         return output_dir
-    else:
-        # The output_dir may not be created yet, so check its parent.
-        if directory_access(os.path.dirname(output_dir), "w+"):
-            return output_dir
+    # The output_dir may not be created yet, so check its parent.
+    if directory_access(os.path.dirname(output_dir), "w+"):
+        return output_dir
     return os.path.expanduser(os.path.join(OWTF_CONF, output_dir))
 
 

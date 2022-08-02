@@ -138,9 +138,7 @@ def add_url(session, url, found=None, target_id=None):
     :return: None
     :rtype: None
     """
-    visited = False
-    if found is not None:  # Visited URL -> Found in [ True, False ]
-        visited = True
+    visited = found is not None
     return add_urls_to_db(session, url, visited, found=found, target_id=target_id)
 
 
@@ -200,12 +198,11 @@ def url_gen_query(session, criteria, target_id, for_stats=False):
             if isinstance(criteria.get("url"), list):
                 criteria["url"] = criteria["url"][0]
             query = query.filter(Url.url.like("%%{!s}%%".format(criteria["url"])))
-    else:  # If not search
-        if criteria.get("url", None):
-            if isinstance(criteria.get("url"), str):
-                query = query.filter_by(url=criteria["url"])
-            if isinstance(criteria.get("url"), list):
-                query = query.filter(Url.url.in_(criteria["url"]))
+    elif criteria.get("url", None):
+        if isinstance(criteria.get("url"), str):
+            query = query.filter_by(url=criteria["url"])
+        if isinstance(criteria.get("url"), list):
+            query = query.filter(Url.url.in_(criteria["url"]))
     # For the following section doesn't matter if filter/search because
     # it doesn't make sense to search in a boolean column :P
     if criteria.get("visited", None):
@@ -269,9 +266,8 @@ def search_all_urls(session, criteria, target_id=None):
     filtered_number = get_count(
         url_gen_query(session, criteria, target_id, for_stats=True)
     )
-    results = {
+    return {
         "records_total": total,
         "records_filtered": filtered_number,
         "data": [url_obj.to_dict() for url_obj in filtered_url_objs],
     }
-    return results

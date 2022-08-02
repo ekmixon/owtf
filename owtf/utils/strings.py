@@ -23,9 +23,7 @@ def utf8(string):
 
 
 def to_str(byte):
-    if isinstance(byte, bytes):
-        return byte.decode("utf-8", "ignore")
-    return byte
+    return byte.decode("utf-8", "ignore") if isinstance(byte, bytes) else byte
 
 
 def str2bool(string):
@@ -36,7 +34,7 @@ def str2bool(string):
     :return: Boolean equivalent
     :rtype: `bool`
     """
-    return not (string in ["False", "false", 0, "0"])
+    return string not in ["False", "false", 0, "0"]
 
 
 def multi_replace(text, replace_dict, simple_text=False):
@@ -58,13 +56,12 @@ def multi_replace(text, replace_dict, simple_text=False):
                 new_text = new_text.replace(
                     REPLACEMENT_DELIMITER + key + REPLACEMENT_DELIMITER, multi_replace(replace_dict[key], replace_dict)
                 )
-        new_text = os.path.expanduser(new_text)
     else:
         for key in replace_dict.keys():
             # A recursive call to remove all level occurrences of place
             # holders.
             new_text = new_text.replace(key, replace_dict[key])
-        new_text = os.path.expanduser(new_text)
+    new_text = os.path.expanduser(new_text)
     return new_text
 
 
@@ -78,10 +75,7 @@ def get_as_list(key_list):
     """
     from owtf.config import config_handler
 
-    value_list = []
-    for key in key_list:
-        value_list.append(config_handler.get_val(key))
-    return value_list
+    return [config_handler.get_val(key) for key in key_list]
 
 
 def get_header_list(key):
@@ -218,7 +212,7 @@ def truncate_lines(str, num_lines, eol="\n"):
     :return: Joined string after truncation
     :rtype: `str`
     """
-    return eol.join(str.split(eol)[0:num_lines])
+    return eol.join(str.split(eol)[:num_lines])
 
 
 def get_random_str(len):
@@ -229,7 +223,7 @@ def get_random_str(len):
     :return: Random generated string
     :rtype: `str`
     """
-    return base64.urlsafe_b64encode(os.urandom(len))[0:len]
+    return base64.urlsafe_b64encode(os.urandom(len))[:len]
 
 
 def gen_secure_random_str():
@@ -289,13 +283,11 @@ def str_to_dict(string):
     :rtype: `dict`
     """
     dict = defaultdict(list)
-    count = 0
     prev_item = ""
-    for item in string.strip().split("="):
+    for count, item in enumerate(string.strip().split("=")):
         if count % 2 == 1:  # Key.
             dict[prev_item] = item
         else:  # Value.
             dict[item] = ""
             prev_item = item
-        count += 1
     return dict

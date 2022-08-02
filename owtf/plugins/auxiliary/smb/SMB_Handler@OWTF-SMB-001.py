@@ -6,7 +6,6 @@ DESCRIPTION = "Mounts and/or uploads/downloads files to an SMB share -i.e. for I
 
 
 def run(PluginInfo):
-    Content = []
     smb = SMB()
     args = {
         "Description": DESCRIPTION,
@@ -30,4 +29,4 @@ def run(PluginInfo):
         smb.Transfer()
     if not smb.IsClosed():  # Ensure clean exit if reusing connection
         smb.UnMount(PluginInfo)
-    return Content
+    return []

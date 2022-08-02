@@ -43,14 +43,10 @@ def gen_signed_cert(domain, ca_crt, ca_key, ca_pass, certs_folder):
     # The first conditions checks if file exists, and does nothing if true
     # If file doesn't exist lock is obtained for writing (Other processes in race must wait)
     # After obtaining lock another check to handle race conditions gracefully
-    if os.path.exists(key_path) and os.path.exists(cert_path):
-        pass
-    else:
+    if not os.path.exists(key_path) or not os.path.exists(cert_path):
         with FileLock(cert_path, timeout=2):
             # Check happens if the certificate and key pair already exists for a domain
-            if os.path.exists(key_path) and os.path.exists(cert_path):
-                pass
-            else:
+            if not os.path.exists(key_path) or not os.path.exists(cert_path):
                 # Serial Generation - Serial number must be unique for each certificate,
                 # so serial is generated based on domain name
                 md5_hash = hashlib.md5()

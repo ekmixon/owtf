@@ -117,11 +117,11 @@ class InteractiveShell(BaseShell):
         :return: Command output
         :rtype: `str`
         """
-        output = ""
-        for command in cmd_list:
-            if command != "None":
-                output += self.run(command, plugin_info)
-        return output
+        return "".join(
+            self.run(command, plugin_info)
+            for command in cmd_list
+            if command != "None"
+        )
 
     def open(self, options, plugin_info):
         """Open the connection channel

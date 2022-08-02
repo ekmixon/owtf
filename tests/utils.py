@@ -16,7 +16,7 @@ def db_setup(cmd):
     """Reset OWTF database."""
     if cmd not in ["clean", "init"]:
         return
-    formatted_cmd = "make db-{}".format(cmd)
+    formatted_cmd = f"make db-{cmd}"
     pwd = os.getcwd()
     db_process = subprocess.Popen(
         "/usr/bin/echo '\n' | %s %s" % (os.path.join(pwd), formatted_cmd),
@@ -42,13 +42,11 @@ def load_log(
     """Read the file 'name' and returns its content."""
     if not name.endswith(".log"):
         name += ".log"
-    if not absolute_path:
-        fullpath = os.path.join(os.getcwd(),
-        	dir_owtf_review,
-        	dir_owtf_logs,
-        	name
-        )
-    else:
-        fullpath = name
+    fullpath = (
+        name
+        if absolute_path
+        else os.path.join(os.getcwd(), dir_owtf_review, dir_owtf_logs, name)
+    )
+
     with open(fullpath, "r") as f:
         return f.readlines()

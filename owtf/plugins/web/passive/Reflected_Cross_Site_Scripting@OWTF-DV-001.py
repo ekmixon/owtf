@@ -9,5 +9,4 @@ DESCRIPTION = "Plugin to assist passive testing for known XSS vectors"
 
 def run(PluginInfo):
     resource = get_resources("PassiveCrossSiteScripting")
-    Content = plugin_helper.resource_linklist("Online Resources", resource)
-    return Content
+    return plugin_helper.resource_linklist("Online Resources", resource)

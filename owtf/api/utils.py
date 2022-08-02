@@ -18,10 +18,7 @@ class VersionMatches(Matcher):
             return {}
 
         header_version = request.headers.get("X-API-VERSION", None)
-        if "v{}".format(header_version) in request.path:
-            return {}
-
-        return None
+        return {} if f"v{header_version}" in request.path else None
 
 
 def _filter_headers(header_str, simple_headers):
@@ -29,7 +26,7 @@ def _filter_headers(header_str, simple_headers):
     if not header_str:
         return set()
 
-    header_set = set(value for value in header_str.split(","))
+    header_set = set(header_str.split(","))
     header_set.difference_update(simple_headers)
     header_set.difference_update("")
     return header_set

@@ -21,15 +21,14 @@ class Session(Model):
 
     @classmethod
     def get_by_id(cls, session, id):
-        session_obj = session.query(Session).get(id)
-        if not session_obj:
+        if session_obj := session.query(Session).get(id):
+            return session_obj.to_dict()
+        else:
             raise exceptions.InvalidSessionReference("No session with id: {!s}".format(id))
-        return session_obj.to_dict()
 
     @classmethod
     def get_active(cls, session):
-        session_id = session.query(Session.id).filter_by(active=True).first()
-        return session_id
+        return session.query(Session.id).filter_by(active=True).first()
 
     @classmethod
     def set_by_id(cls, session, session_id):

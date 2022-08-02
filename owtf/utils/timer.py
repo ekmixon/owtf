@@ -94,7 +94,7 @@ class Timer(object):
         """
         seconds, milliseconds = str(seconds_str).split(".")
         seconds = int(seconds)
-        milliseconds = int(milliseconds[0:3])
+        milliseconds = int(milliseconds[:3])
         hours = seconds / 3600
         seconds -= 3600 * hours
         minutes = seconds / 60

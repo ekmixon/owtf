@@ -19,7 +19,7 @@ def Usage(Message):
         GetName()
         + " EMAIL_TARGET=? EMAIL_FROM=? SMTP_LOGIN=? SMTP_PASS=? SMTP_HOST=? SMTP_PORT=? EMAIL_PRIORITY=? PDF_TEMPLATE=? MSF_LISTENER_PORT=? MSF_LISTENER_SETUP=? ATTACHMENT_NAME=? SET_EMAIL_TEMPLATE=? PHISHING_PAYLOAD=? PHISHING_SCRIPT_DIR=? TOOL_SET_DIR=?"
     )
-    print("ERROR: " + Message)
+    print(f"ERROR: {Message}")
     sys.exit(-1)
 
 
@@ -70,7 +70,7 @@ def GetParams():  # Basic validation and parameter retrieval:
     try:
         Opts, Args = getopt.getopt(sys.argv[1:], "a:")
     except getopt.GetoptError:
-        Usage("Invalid " + ScriptName + " option(s)")
+        Usage(f"Invalid {ScriptName} option(s)")
 
     Params = defaultdict(list)
     for Arg in Args:
@@ -78,12 +78,12 @@ def GetParams():  # Basic validation and parameter retrieval:
         if len(Chunks) != 2:
             Usage("'" + str(Arg) + "' is incorrect: The parameter format is ARGNAME=ARGVALUE")
         ArgName = Chunks[0]
-        ArgValue = Arg.replace(ArgName + "=", "")
+        ArgValue = Arg.replace(f"{ArgName}=", "")
         Params[ArgName] = ArgValue
 
     for Mandatory in MandatoryParams:
         if Mandatory not in Params:
-            Usage("Must include parameter: " + Mandatory)
+            Usage(f"Must include parameter: {Mandatory}")
 
     SETScript = Params["PHISHING_SCRIPT_DIR"] + "/set_scripts/payload" + Params["PHISHING_PAYLOAD"] + ".set"
     SETDebugAutomate = Params["PHISHING_SCRIPT_DIR"] + "/set_debug_automate.sh"

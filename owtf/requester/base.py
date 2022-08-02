@@ -166,21 +166,25 @@ class Requester(object):
         :return: Result of the check
         :rtype: `list`
         """
-        if self.proxy is not None and self.is_request_possible():
-            url = PROXY_CHECK_URL
-            refused_before = self.req_count_refused
-            logging.info("Proxy Check: Avoid logging request again if already in DB..")
-            log_setting_backup = False
-            if self.is_transaction_added(url):
-                log_setting_backup = not self.log_transactions
-            if log_setting_backup:
-                self.log_transactions = True
-            refused_after = self.req_count_refused
-            if refused_before < refused_after:  # Proxy is refusing connections.
-                return [False, "ERROR: Proxy Check error: The proxy is not listening or is refusing connections"]
-            else:
-                return [True, "Proxy Check OK: The proxy appears to be working"]
-        return [True, "Proxy Check OK: No proxy is setup or no HTTP requests will be made"]
+        if self.proxy is None or not self.is_request_possible():
+            return [True, "Proxy Check OK: No proxy is setup or no HTTP requests will be made"]
+        url = PROXY_CHECK_URL
+        refused_before = self.req_count_refused
+        logging.info("Proxy Check: Avoid logging request again if already in DB..")
+        log_setting_backup = False
+        if self.is_transaction_added(url):
+            log_setting_backup = not self.log_transactions
+        if log_setting_backup:
+            self.log_transactions = True
+        refused_after = self.req_count_refused
+        return (
+            [
+                False,
+                "ERROR: Proxy Check error: The proxy is not listening or is refusing connections",
+            ]
+            if refused_before < refused_after
+            else [True, "Proxy Check OK: The proxy appears to be working"]
+        )
 
     def get_headers(self):
         """Get headers
@@ -221,9 +225,7 @@ class Requester(object):
         :rtype: `str`
         """
         post = self.get_post(post)
-        if post is None:
-            return ""
-        return post
+        return "" if post is None else post
 
     def get_post(self, post=None):
         """Get post request
@@ -233,10 +235,10 @@ class Requester(object):
         :return: Processed POST request
         :rtype: `str`
         """
-        if "" == post:
+        if post == "":
             post = None
         if post:
-            if isinstance(post, str) or isinstance(post, unicode):
+            if isinstance(post, (str, unicode)):
                 # Must be a dictionary prior to urlencode.
                 post = str_to_dict(str(post))
             post = urlencode(post).encode("utf-8")
@@ -461,17 +463,15 @@ class Requester(object):
         # Must clean-up data to ensure match is found.
         if data is not None:
             criteria["data"] = self.get_post_to_str(data)
-        # Visit URL if not already visited.
-        if not use_cache or not is_transaction_already_added(self.session, criteria):
-            if method in ["", "GET", "POST", "HEAD", "TRACE", "OPTIONS"]:
-                return self.request(url, method, data)
-            elif method == "DEBUG":
-                return self.debug(url)
-            elif method == "PUT":
-                return self.put(url, data)
-        else:  # Retrieve from DB = faster.
+        if use_cache and is_transaction_already_added(self.session, criteria):
             # Important since there is no transaction ID with transactions objects created by Requester.
             return get_first(self.session, criteria)
+        if method in ["", "GET", "POST", "HEAD", "TRACE", "OPTIONS"]:
+            return self.request(url, method, data)
+        elif method == "DEBUG":
+            return self.debug(url)
+        elif method == "PUT":
+            return self.put(url, data)
 
     def get_transactions(self, use_cache, url_list, method=None, data=None, unique=True):
         """Get transaction from request, response

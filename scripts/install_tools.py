@@ -31,9 +31,7 @@ def create_directory(directory):
         return True
     except OSError:
         # Checks if the folder is empty
-        if not os.listdir(directory):
-            return True
-        return False
+        return not os.listdir(directory)
 
 
 def install_in_directory(directory, command):
@@ -43,11 +41,15 @@ def install_in_directory(directory, command):
     :return: True - if installation successful or directory already exists, and False if not.
     """
     if create_directory(directory):
-        print(BLUE + "[*] Switching to {}".format(directory) + RESET)
+        print(BLUE + f"[*] Switching to {directory}" + RESET)
         os.chdir(directory)
         os.system(command)
     else:
-        print(WARNING + "[!] Directory {} already exists, so skipping installation for this".format(directory) + RESET)
+        print(
+            WARNING
+            + f"[!] Directory {directory} already exists, so skipping installation for this"
+            + RESET
+        )
 
 
 def parse_and_install():

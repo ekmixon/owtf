@@ -54,8 +54,9 @@ class LocalWorker(OWTFProcess, BaseWorker):
                 trace = traceback.format_tb(tb)
                 Error.add_error(
                     session=self.session,
-                    message="Exception occurred while running plugin: {}, {}".format(str(e), str(ex)),
+                    message=f"Exception occurred while running plugin: {str(e)}, {str(ex)}",
                     trace=trace,
                 )
+
         logging.debug("Worker (%d): Exiting...", self.pid)
         sys.exit(0)

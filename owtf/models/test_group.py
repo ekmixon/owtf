@@ -40,7 +40,4 @@ class TestGroup(Model):
         :rtype:
         """
         test_groups = session.query(TestGroup).order_by(TestGroup.priority.desc()).all()
-        dict_list = []
-        for obj in test_groups:
-            dict_list.append(obj.to_dict())
-        return dict_list
+        return [obj.to_dict() for obj in test_groups]

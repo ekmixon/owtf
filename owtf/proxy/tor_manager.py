@@ -16,10 +16,7 @@ class TOR_manager(object):
     # Initialization of arguments and connections
     def __init__(self, args):
         # If the args are empty it will filled with the default values
-        if args[0] == "":
-            self.ip = "127.0.0.1"
-        else:
-            self.ip = args[0]
+        self.ip = "127.0.0.1" if args[0] == "" else args[0]
         if args[1] == "":
             self.port = 9050
         else:
@@ -34,10 +31,7 @@ class TOR_manager(object):
                 self.tor_control_port = int(args[2])
             except ValueError:
                 abort_framework("Invalid TOR Controlport")
-        if args[3] == "":
-            self.password = "owtf"
-        else:
-            self.password = args[3]
+        self.password = "owtf" if args[3] == "" else args[3]
         if args[4] == "":
             self.time = 5
         else:
@@ -62,7 +56,7 @@ class TOR_manager(object):
         if response.startswith("250"):  # 250 is the success response
             logging.info("Successfully Authenticated to TOR control")
         else:
-            abort_framework("Authentication Error : %s" % response)
+            abort_framework(f"Authentication Error : {response}")
 
     def open_connection(self):
         """Opens a new connection to TOR control
@@ -157,5 +151,4 @@ class TOR_manager(object):
         while True:
             while self.renew_ip() is True:
                 time.sleep(self.time * 60)  # time converted in minutes
-            else:
-                time.sleep(10)  # will try again to renew IP in 10 seconds
+            time.sleep(10)  # will try again to renew IP in 10 seconds

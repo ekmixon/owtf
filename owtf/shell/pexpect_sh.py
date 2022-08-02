@@ -144,10 +144,7 @@ class PExpectShell(BaseShell):
         :return: Command output
         :rtype: `str`
         """
-        output = ""
-        for command in cmd_list:
-            output += self.run(command, plugin_info)
-        return output
+        return "".join(self.run(command, plugin_info) for command in cmd_list)
 
     def open(self, options, plugin_info):
         """Open the connection channel
@@ -166,8 +163,7 @@ class PExpectShell(BaseShell):
             if "ConnectVia" in options:
                 name, command = options["ConnectVia"][0]
                 cmd_list += command.split(";")
-            cmd_count = 1
-            for cmd in cmd_list:
+            for cmd_count, cmd in enumerate(cmd_list, start=1):
                 if cmd_count == 1:
                     try:
                         self.connection = pexpect.spawn(cmd)
@@ -176,7 +172,6 @@ class PExpectShell(BaseShell):
                         logging.info(e.message)
                 else:
                     self.run(cmd, plugin_info)
-                cmd_count += 1
             if "InitialCommands" in options and options["InitialCommands"]:
                 output += self.run_cmd_list(options["InitialCommands"], plugin_info)
         return output

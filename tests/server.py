@@ -58,7 +58,7 @@ class WebServerProcess(object):
             time.sleep(0.1)
 
     def test_connection(self):
-        conn = httplib.HTTPConnection("%s:%s" % (self.ip, self.port))
+        conn = httplib.HTTPConnection(f"{self.ip}:{self.port}")
         conn.request("GET", "/")
 
     def stop(self):
@@ -81,10 +81,7 @@ class WebServerProcess(object):
 
     def is_alive(self):
         """Test if the server process is alive and running."""
-        if self.process is None:
-            return False
-        else:
-            return self.process.is_alive()
+        return False if self.process is None else self.process.is_alive()
 
 
 def start_application(application, ip, port):

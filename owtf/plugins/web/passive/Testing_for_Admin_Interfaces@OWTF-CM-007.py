@@ -10,5 +10,4 @@ DESCRIPTION = "Google Hacking for Admin interfaces"
 
 def run(PluginInfo):
     resource = get_resources("PassiveAdminInterfaceLnk")
-    Content = plugin_helper.resource_linklist("Online Resources", resource)
-    return Content
+    return plugin_helper.resource_linklist("Online Resources", resource)

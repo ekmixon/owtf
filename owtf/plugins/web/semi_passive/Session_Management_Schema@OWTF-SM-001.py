@@ -31,7 +31,7 @@ def run(PluginInfo):
             continue
         if url not in url_list:  # Only if URL not already processed!
             url_list.append(url)  # Keep track of processed URLs
-            for _ in range(0, 10):  # Get more cookies to perform analysis
+            for _ in range(10):  # Get more cookies to perform analysis
                 transaction = requester.get_transaction(False, url)
                 cookies = transaction.get_session_tokens()
                 for cookie in cookies:

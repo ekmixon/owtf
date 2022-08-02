@@ -17,6 +17,6 @@ def run(PluginInfo):
     urls = get_urls_to_visit()
     for url in urls:  # This will return only unvisited urls
         requester.get_transaction(True, url)  # Use cache if possible
-    Content = "{} URLs were visited".format(str(len(urls)))
+    Content = f"{len(urls)} URLs were visited"
     logging.info(Content)
     return plugin_helper.HtmlString(Content)

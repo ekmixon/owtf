@@ -129,8 +129,7 @@ class AsyncPopen(subprocess.Popen):
 
 
 def recv_some(p, t=.1, e=1, tr=5, stderr=0):
-    if tr < 1:
-        tr = 1
+    tr = max(tr, 1)
     x = time.time() + t
     y = []
     r = ""
@@ -174,6 +173,6 @@ if __name__ == "__main__":
     for cmd in commands:
         send_all(a, cmd + tail)
         print(recv_some(a))
-    send_all(a, "exit" + tail)
+    send_all(a, f"exit{tail}")
     print(recv_some(a, e=0))
     a.wait()

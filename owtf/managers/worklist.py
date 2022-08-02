@@ -129,8 +129,7 @@ def _derive_work_dict(work_model):
     :rtype: `dict`
     """
     if work_model is not None:
-        wdict = {}
-        wdict["target"] = get_target_config_dict(work_model.target)
+        wdict = {"target": get_target_config_dict(work_model.target)}
         wdict["plugin"] = work_model.plugin.to_dict()
         wdict["id"] = work_model.id
         wdict["active"] = work_model.active
@@ -145,11 +144,11 @@ def _derive_work_dicts(work_models):
     :return: List of work dicts
     :rtype: `dict`
     """
-    results = []
-    for work_model in work_models:
-        if work_model is not None:
-            results.append(_derive_work_dict(work_model))
-    return results
+    return [
+        _derive_work_dict(work_model)
+        for work_model in work_models
+        if work_model is not None
+    ]
 
 
 def get_work_for_target(session, in_use_target_list):
@@ -163,8 +162,7 @@ def get_work_for_target(session, in_use_target_list):
     query = session.query(Work).filter_by(active=True).order_by(Work.id)
     if len(in_use_target_list) > 0:
         query = query.filter(not_(Work.target_id.in_(in_use_target_list)))
-    work_obj = query.first()
-    if work_obj:
+    if work_obj := query.first():
         # First get the worker dict and then delete
         work_dict = _derive_work_dict(work_obj)
         session.delete(work_obj)
@@ -223,11 +221,7 @@ def group_sort_order(plugin_list):
         "passive": 3,
         "external": 4,
     }
-    # reverse = True so that descending order is maintained
-    sorted_plugin_list = sorted(
-        plugin_list, key=lambda k: priority[k["type"]], reverse=True
-    )
-    return sorted_plugin_list
+    return sorted(plugin_list, key=lambda k: priority[k["type"]], reverse=True)
 
 
 def add_work(session, target_list, plugin_list, force_overwrite=False):
@@ -396,9 +390,8 @@ def search_all_work(session, criteria):
     total = get_count(session.query(Work))
     filtered_work_objs = worklist_generate_query(session, criteria).all()
     filtered_number = worklist_generate_query(session, criteria, for_stats=True).count()
-    results = {
+    return {
         "records_total": total,
         "records_filtered": filtered_number,
         "data": _derive_work_dicts(filtered_work_objs),
     }
-    return results

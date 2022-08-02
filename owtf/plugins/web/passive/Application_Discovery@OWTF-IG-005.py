@@ -8,7 +8,7 @@ DESCRIPTION = "Third party discovery resources"
 
 
 def run(PluginInfo):
-    Content = plugin_helper.Tabbedresource_linklist(
+    return plugin_helper.Tabbedresource_linklist(
         [
             ["DNS", get_resources("PassiveAppDiscoveryDNS")],
             ["WHOIS", get_resources("PassiveAppDiscoveryWHOIS")],
@@ -18,4 +18,3 @@ def run(PluginInfo):
             ["Misc", get_resources("PassiveAppDiscoveryMisc")],
         ]
     )
-    return Content

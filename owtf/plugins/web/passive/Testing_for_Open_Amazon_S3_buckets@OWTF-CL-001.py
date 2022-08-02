@@ -17,6 +17,4 @@ def run(PluginInfo):
     # Replace it in the resource
     resource[0][1] = extract_sld[0]
 
-    Content = plugin_helper.resource_linklist("Online Resources", resource)
-
-    return Content
+    return plugin_helper.resource_linklist("Online Resources", resource)

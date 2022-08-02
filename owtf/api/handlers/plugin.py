@@ -79,20 +79,23 @@ class PluginDataHandler(APIRequestHandler):
             if not plugin_group:  # Check if plugin_group is present in url
                 self.success(get_all_plugin_dicts(self.session, filter_data))
             if plugin_group and (not plugin_type) and (not plugin_code):
-                filter_data.update({"group": plugin_group})
+                filter_data["group"] = plugin_group
                 self.success(get_all_plugin_dicts(self.session, filter_data))
             if plugin_group and plugin_type and (not plugin_code):
                 if plugin_type not in get_types_for_plugin_group(self.session, plugin_group):
                     raise APIError(422, "Plugin type not found in selected plugin group")
-                filter_data.update({"type": plugin_type, "group": plugin_group})
+                filter_data |= {"type": plugin_type, "group": plugin_group}
                 self.success(get_all_plugin_dicts(self.session, filter_data))
             if plugin_group and plugin_type and plugin_code:
                 if plugin_type not in get_types_for_plugin_group(self.session, plugin_group):
                     raise APIError(422, "Plugin type not found in selected plugin group")
-                filter_data.update({"type": plugin_type, "group": plugin_group, "code": plugin_code})
-                # This combination will be unique, so have to return a dict
-                results = get_all_plugin_dicts(self.session, filter_data)
-                if results:
+                filter_data |= {
+                    "type": plugin_type,
+                    "group": plugin_group,
+                    "code": plugin_code,
+                }
+
+                if results := get_all_plugin_dicts(self.session, filter_data):
                     self.success(results[0])
                 else:
                     raise APIError(500, "Cannot get any plugin dict")
@@ -198,11 +201,12 @@ class PluginNameOutput(APIRequestHandler):
                 if item["plugin_code"] in dict_to_return:
                     dict_to_return[item["plugin_code"]]["data"].append(item)
                 else:
-                    ini_list = []
-                    ini_list.append(item)
-                    dict_to_return[item["plugin_code"]] = {}
-                    dict_to_return[item["plugin_code"]]["data"] = ini_list
-                    dict_to_return[item["plugin_code"]]["details"] = groups[item["plugin_code"]]
+                    ini_list = [item]
+                    dict_to_return[item["plugin_code"]] = {
+                        "data": ini_list,
+                        "details": groups[item["plugin_code"]],
+                    }
+
             dict_to_return = collections.OrderedDict(sorted(dict_to_return.items()))
             if results:
                 self.success(dict_to_return)
@@ -265,19 +269,26 @@ class PluginOutputHandler(APIRequestHandler):
         try:
             filter_data = dict(self.request.arguments)
             if plugin_group and (not plugin_type):
-                filter_data.update({"plugin_group": plugin_group})
+                filter_data["plugin_group"] = plugin_group
             if plugin_type and plugin_group and (not plugin_code):
                 if plugin_type not in get_types_for_plugin_group(self.session, plugin_group):
                     raise APIError(422, "Plugin type not found in selected plugin group")
-                filter_data.update({"plugin_type": plugin_type, "plugin_group": plugin_group})
+                filter_data |= {"plugin_type": plugin_type, "plugin_group": plugin_group}
             if plugin_type and plugin_group and plugin_code:
                 if plugin_type not in get_types_for_plugin_group(self.session, plugin_group):
                     raise APIError(422, "Plugin type not found in selected plugin group")
-                filter_data.update(
-                    {"plugin_type": plugin_type, "plugin_group": plugin_group, "plugin_code": plugin_code}
-                )
-            results = get_all_poutputs(self.session, filter_data, target_id=int(target_id), inc_output=True)
-            if results:
+                filter_data |= {
+                    "plugin_type": plugin_type,
+                    "plugin_group": plugin_group,
+                    "plugin_code": plugin_code,
+                }
+
+            if results := get_all_poutputs(
+                self.session,
+                filter_data,
+                target_id=int(target_id),
+                inc_output=True,
+            ):
                 self.success(results)
             else:
                 raise APIError(500, "Cannot fetch plugin outputs")
@@ -321,12 +332,16 @@ class PluginOutputHandler(APIRequestHandler):
             }
         """
         try:
-            if (not target_id) or (not plugin_group) or (not plugin_type) or (not plugin_code):
+            if (
+                not target_id
+                or not plugin_group
+                or not plugin_type
+                or not plugin_code
+            ):
                 raise APIError(400, "Missing requirement arguments")
-            else:
-                patch_data = dict(self.request.arguments)
-                update_poutput(self.session, plugin_group, plugin_type, plugin_code, patch_data, target_id=target_id)
-                self.success(None)
+            patch_data = dict(self.request.arguments)
+            update_poutput(self.session, plugin_group, plugin_type, plugin_code, patch_data, target_id=target_id)
+            self.success(None)
         except exceptions.InvalidTargetReference:
             raise APIError(400, "Invalid target reference provided")
         except exceptions.InvalidParameterType:
@@ -358,19 +373,22 @@ class PluginOutputHandler(APIRequestHandler):
             if not plugin_group:  # First check if plugin_group is present in url
                 delete_all_poutput(self.session, filter_data, target_id=int(target_id))
             if plugin_group and (not plugin_type):
-                filter_data.update({"plugin_group": plugin_group})
+                filter_data["plugin_group"] = plugin_group
                 delete_all_poutput(self.session, filter_data, target_id=int(target_id))
             if plugin_type and plugin_group and (not plugin_code):
                 if plugin_type not in get_types_for_plugin_group(self.session, plugin_group):
                     raise APIError(422, "Plugin type not found in the selected plugin group")
-                filter_data.update({"plugin_type": plugin_type, "plugin_group": plugin_group})
+                filter_data |= {"plugin_type": plugin_type, "plugin_group": plugin_group}
                 delete_all_poutput(self.session, filter_data, target_id=int(target_id))
             if plugin_type and plugin_group and plugin_code:
                 if plugin_type not in get_types_for_plugin_group(self.session, plugin_group):
                     raise APIError(422, "Plugin type not found in the selected plugin group")
-                filter_data.update(
-                    {"plugin_type": plugin_type, "plugin_group": plugin_group, "plugin_code": plugin_code}
-                )
+                filter_data |= {
+                    "plugin_type": plugin_type,
+                    "plugin_group": plugin_group,
+                    "plugin_code": plugin_code,
+                }
+
                 delete_all_poutput(self.session, filter_data, target_id=int(target_id))
                 self.success(None)
         except exceptions.InvalidTargetReference:

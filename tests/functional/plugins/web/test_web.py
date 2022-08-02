@@ -13,12 +13,9 @@ class OWTFCliWebPluginTest(OWTFCliWebPluginTestCase):
     def test_web_active(self):
         """Test OWTF WEB active plugins."""
         self.run_owtf(
-            "-g",
-            "web",
-            "-t",
-            "active",
-            "%s://%s:%s" % (self.PROTOCOL, self.IP, self.PORT),
+            "-g", "web", "-t", "active", f"{self.PROTOCOL}://{self.IP}:{self.PORT}"
         )
+
         # Test OWTF exited cleanly.
         self.assert_is_in_logs("All jobs have been done. Exiting.", name="MainProcess")
 
@@ -29,8 +26,9 @@ class OWTFCliWebPluginTest(OWTFCliWebPluginTestCase):
             "web",
             "-t",
             "passive",
-            "%s://%s:%s" % (self.PROTOCOL, self.IP, self.PORT),
+            f"{self.PROTOCOL}://{self.IP}:{self.PORT}",
         )
+
         # Test OWTF exited cleanly.
         self.assert_is_in_logs("All jobs have been done. Exiting.", name="MainProcess")
 
@@ -41,8 +39,9 @@ class OWTFCliWebPluginTest(OWTFCliWebPluginTestCase):
             "web",
             "-t",
             "semi_passive",
-            "%s://%s:%s" % (self.PROTOCOL, self.IP, self.PORT),
+            f"{self.PROTOCOL}://{self.IP}:{self.PORT}",
         )
+
         # Test OWTF exited cleanly.
         self.assert_is_in_logs("All jobs have been done. Exiting.", name="MainProcess")
 
@@ -53,19 +52,17 @@ class OWTFCliWebPluginTest(OWTFCliWebPluginTestCase):
             "web",
             "-t",
             "external",
-            "%s://%s:%s" % (self.PROTOCOL, self.IP, self.PORT),
+            f"{self.PROTOCOL}://{self.IP}:{self.PORT}",
         )
+
         # Test OWTF exited cleanly.
         self.assert_is_in_logs("All jobs have been done. Exiting.", name="MainProcess")
 
     def test_web_grep(self):
         """Test OWTF WEB grep plugins."""
         self.run_owtf(
-            "-g",
-            "web",
-            "-t",
-            "grep",
-            "%s://%s:%s" % (self.PROTOCOL, self.IP, self.PORT),
+            "-g", "web", "-t", "grep", f"{self.PROTOCOL}://{self.IP}:{self.PORT}"
         )
+
         # Test OWTF exited cleanly.
         self.assert_is_in_logs("All jobs have been done. Exiting.", name="MainProcess")

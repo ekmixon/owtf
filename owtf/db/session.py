@@ -4,6 +4,7 @@ owtf.db.session
 
 This file handles all the database transactions.
 """
+
 import functools
 import sys
 import logging
@@ -16,9 +17,7 @@ from sqlalchemy.pool import NullPool
 from owtf.db.model_base import Model
 from owtf.settings import DATABASE_IP, DATABASE_NAME, DATABASE_PASS, DATABASE_USER, DATABASE_PORT
 
-DB_URI = "postgresql+psycopg2://{}:{}@{}:{}/{}".format(
-    DATABASE_USER, DATABASE_PASS, DATABASE_IP, DATABASE_PORT, DATABASE_NAME
-)
+DB_URI = f"postgresql+psycopg2://{DATABASE_USER}:{DATABASE_PASS}@{DATABASE_IP}:{DATABASE_PORT}/{DATABASE_NAME}"
 
 
 def get_count(q):

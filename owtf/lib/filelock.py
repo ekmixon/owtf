@@ -49,7 +49,7 @@ class FileLock(object):
             the maximum timeout and the delay between each attempt to lock.
         """
         self.is_locked = False
-        self.lockfile = protected_file_path + ".lock"
+        self.lockfile = f"{protected_file_path}.lock"
         self.timeout = timeout
         self.delay = delay
         self._lock_file_contents = lock_file_contents

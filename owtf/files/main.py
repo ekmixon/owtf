@@ -24,8 +24,13 @@ class FileServer():
             self.server = tornado.httpserver.HTTPServer(self.application)
             self.server.bind(int(FILE_SERVER_PORT), address=SERVER_ADDR)
             tornado.options.parse_command_line(
-                args=["dummy_arg", "--log_file_prefix={}".format(FILE_SERVER_LOG), "--logging=info"]
+                args=[
+                    "dummy_arg",
+                    f"--log_file_prefix={FILE_SERVER_LOG}",
+                    "--logging=info",
+                ]
             )
+
             self.server.start()
         except Exception as e:
             logging.error(e)

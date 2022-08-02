@@ -13,8 +13,7 @@ class _Model(object):
 
     @classmethod
     def get(cls, session, **kwargs):
-        instance = session.query(cls).filter_by(**kwargs).scalar()
-        if instance:
+        if instance := session.query(cls).filter_by(**kwargs).scalar():
             return instance
         return None
 

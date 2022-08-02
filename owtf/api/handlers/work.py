@@ -117,8 +117,8 @@ class WorkerHandler(APIRequestHandler):
                 self.success(worker_manager.get_worker_details(int(worker_id)))
             if worker_id and action:
                 if int(worker_id) == 0:
-                    getattr(worker_manager, "{}_all_workers".format(action))()
-                getattr(worker_manager, "{}_worker".format(action))(int(worker_id))
+                    getattr(worker_manager, f"{action}_all_workers")()
+                getattr(worker_manager, f"{action}_worker")(int(worker_id))
         except exceptions.InvalidWorkerReference:
             raise APIError(400, "Invalid worker referenced")
 
@@ -441,16 +441,15 @@ class WorklistHandler(APIRequestHandler):
             raise APIError(400, "action should be None")
         try:
             work_id = int(work_id)
-            if work_id != 0:  # 0 is like broadcast address
-                if action == "resume":
-                    patch_work(self.session, work_id, active=True)
-                elif action == "pause":
-                    patch_work(self.session, work_id, active=False)
-            else:
+            if work_id == 0:
                 if action == "pause":
                     pause_all_work(self.session)
                 elif action == "resume":
                     resume_all_work(self.session)
+            elif action == "resume":
+                patch_work(self.session, work_id, active=True)
+            elif action == "pause":
+                patch_work(self.session, work_id, active=False)
             self.success(None)
         except exceptions.InvalidWorkReference:
             raise APIError(400, "Invalid worker referenced")

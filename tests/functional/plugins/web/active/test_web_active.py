@@ -17,14 +17,15 @@ class OWTFCliWebActivePluginTest(OWTFCliWebPluginTestCase):
             "OWTF-WVS-001",
             "-t",
             "active",
-            "%s://%s:%s" % (self.PROTOCOL, self.IP, self.PORT),
+            f"{self.PROTOCOL}://{self.IP}:{self.PORT}",
         )
+
         self.assert_is_in_logs(
-            "1 - Target: %s://%s:%s -> Plugin: Arachni Unauthenticated (web/active)"
-            % (self.PROTOCOL, self.IP, self.PORT),
+            f"1 - Target: {self.PROTOCOL}://{self.IP}:{self.PORT} -> Plugin: Arachni Unauthenticated (web/active)",
             name="Worker",
             msg="Arachni web active plugin should have been run!",
         )
+
         self.assert_is_in_logs(
             "Execution Start Date/Time:",
             name="Worker",
@@ -54,15 +55,16 @@ class OWTFCliWebActivePluginTest(OWTFCliWebPluginTestCase):
             "OWTF-WVS-006",
             "-t",
             "active",
-            "%s://%s:%s" % (self.PROTOCOL, self.IP, self.PORT),
+            f"{self.PROTOCOL}://{self.IP}:{self.PORT}",
         )
+
         # Test Skipfish went OK.
         self.assert_is_in_logs(
-            "1 - Target: %s://%s:%s -> Plugin: Skipfish Unauthenticated (web/active)"
-            % (self.PROTOCOL, self.IP, self.PORT),
+            f"1 - Target: {self.PROTOCOL}://{self.IP}:{self.PORT} -> Plugin: Skipfish Unauthenticated (web/active)",
             name="Worker",
             msg="Skipfish web active plugin should have been run!",
         )
+
         self.assert_is_in_logs(
             "Execution Start Date/Time:",
             name="Worker",

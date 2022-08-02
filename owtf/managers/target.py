@@ -92,8 +92,7 @@ def command_already_registered(session, original_command, target_id=None):
     if target_id is not None:
         target_manager.set_target(target_id)
 
-    register_entry = session.query(Command).get(original_command)
-    if register_entry:
+    if register_entry := session.query(Command).get(original_command):
         # If the command was completed and the plugin output to which it
         # is referring exists
         if register_entry.success:
@@ -101,9 +100,8 @@ def command_already_registered(session, original_command, target_id=None):
                 session, register_entry.plugin_key, register_entry.target_id
             ):
                 return get_target_url_for_id(session, register_entry.target_id)
-            else:
-                Command.delete_cmd(session, original_command)
-                return None
+            Command.delete_cmd(session, original_command)
+            return None
         else:  # Command failed
             Command.delete_cmd(session, original_command)
             return get_target_url_for_id(session, register_entry.target_id)
@@ -143,9 +141,10 @@ class TargetManager(object):
         :return: Path config
         :rtype: `dict`
         """
-        path_config = {}
-        # Set the output directory.
-        path_config["host_output"] = os.path.join(OUTPUT_PATH, target_config["host_ip"])
+        path_config = {
+            "host_output": os.path.join(OUTPUT_PATH, target_config["host_ip"])
+        }
+
         path_config["port_output"] = os.path.join(
             path_config["host_output"], target_config["port_number"]
         )
@@ -318,10 +317,9 @@ def delete_target(session, target_url=None, id=None):
         raise InvalidTargetReference(
             "3. Target doesn't exist: {!s}".format(id) if id else str(target_url)
         )
-    if target_obj:
-        target_url = target_obj.target_url
-        session.delete(target_obj)
-        session.commit()
+    target_url = target_obj.target_url
+    session.delete(target_obj)
+    session.commit()
     cleanup_target_dirs(target_url)
 
 
@@ -346,7 +344,7 @@ def get_target_url_for_id(session, id):
     """
     target_obj = session.query(Target).get(id)
     if not target_obj:
-        logging.info("Failing with ID: %s" % str(id))
+        logging.info(f"Failing with ID: {str(id)}")
         raise InvalidTargetReference("1. Target doesn't exist with ID: {!s}".format(id))
     return target_obj.target_url
 
@@ -359,10 +357,10 @@ def get_target_config_by_id(session, id):
     :return: Config dict
     :rtype: `dict`
     """
-    target_obj = session.query(Target).get(id)
-    if not target_obj:
+    if target_obj := session.query(Target).get(id):
+        return get_target_config_dict(target_obj)
+    else:
         raise InvalidTargetReference("5. Target doesn't exist: {!s}".format(id))
-    return get_target_config_dict(target_obj)
 
 
 def target_gen_query(session, filter_data, session_id, for_stats=False):
@@ -378,14 +376,7 @@ def target_gen_query(session, filter_data, session_id, for_stats=False):
     :rtype:
     """
     query = session.query(Target).filter(Target.sessions.any(id=session_id))
-    if filter_data.get("search") is not None:
-        if filter_data.get("target_url", None):
-            if isinstance(filter_data.get("target_url"), list):
-                filter_data["target_url"] = filter_data["target_url"][0]
-            query = query.filter(
-                Target.target_url.like("%%{!s}%%".format(filter_data["target_url"]))
-            )
-    else:
+    if filter_data.get("search") is None:
         if filter_data.get("target_url", None):
             if isinstance(filter_data["target_url"], str):
                 query = query.filter_by(target_url=filter_data["target_url"])
@@ -411,6 +402,12 @@ def target_gen_query(session, filter_data, session_id, for_stats=False):
                 query = query.filter_by(id=filter_data["id"])
             if isinstance(filter_data["id"], list):
                 query = query.filter(Target.id.in_(filter_data.get("id")))
+    elif filter_data.get("target_url", None):
+        if isinstance(filter_data.get("target_url"), list):
+            filter_data["target_url"] = filter_data["target_url"][0]
+        query = query.filter(
+            Target.target_url.like("%%{!s}%%".format(filter_data["target_url"]))
+        )
     # This will allow new targets to be at the start
     query = query.order_by(Target.id.desc())
     if not for_stats:  # query for stats shouldn't have limit and offset
@@ -450,12 +447,11 @@ def search_target_configs(session, filter_data=None, session_id=None):
     filtered_number = get_count(
         target_gen_query(session, filter_data, session_id, for_stats=True)
     )
-    results = {
+    return {
         "records_total": total,
         "records_filtered": filtered_number,
         "data": get_target_configs(filtered_target_objs),
     }
-    return results
 
 
 @session_required
@@ -501,10 +497,7 @@ def get_target_configs(target_obj_list):
     :return: List of target configs
     :rtype: `list`
     """
-    target_configs = []
-    for target_obj in target_obj_list:
-        target_configs.append(get_target_config_dict(target_obj))
-    return target_configs
+    return [get_target_config_dict(target_obj) for target_obj in target_obj_list]
 
 
 def get_targets_as_list(key_list):
@@ -516,10 +509,7 @@ def get_targets_as_list(key_list):
     :rtype: `list`
     """
     session = get_scoped_session()
-    values = []
-    for key in key_list:
-        values.append(get_all_targets(session, key))
-    return values
+    return [get_all_targets(session, key) for key in key_list]
 
 
 def get_all_targets(session, key):
@@ -558,11 +548,10 @@ def is_url_in_scope(url):
     :rtype: `bool`
     """
     parsed_url = urlparse(url)
-    # Get all known Host Names in Scope.
-    for host_name in get_all_in_scope(key="host_name"):
-        if parsed_url.hostname == host_name:
-            return True
-    return False
+    return any(
+        parsed_url.hostname == host_name
+        for host_name in get_all_in_scope(key="host_name")
+    )
 
 
 def load_targets(session, options):
@@ -597,26 +586,29 @@ def get_aux_target():
     :return: List of targets for aux plugins
     :rtype: `list`
     """
+    if not plugin_params.process_args():
+        return []
     # targets can be given by different params depending on the aux plugin we are running
     # so "target_params" is a list of possible parameters by which user can give target
     target_params = ["RHOST", "TARGET", "SMB_HOST", "BASE_URL", "SMTP_HOST"]
-    targets = None
-    if plugin_params.process_args():
-        for param in target_params:
-            if param in plugin_params.args:
-                targets = plugin_params.args[param]
-                break  # it will capture only the first one matched
-        repeat_delim = ","
-        if targets is None:
-            logging.error(
-                "Aux target not found! See your plugin accepted parameters in ./plugins/ folder"
-            )
-            return []
-        if "REPEAT_DELIM" in plugin_params.args:
-            repeat_delim = plugin_params.args["REPEAT_DELIM"]
-        return targets.split(repeat_delim)
-    else:
+    targets = next(
+        (
+            plugin_params.args[param]
+            for param in target_params
+            if param in plugin_params.args
+        ),
+        None,
+    )
+
+    repeat_delim = ","
+    if targets is None:
+        logging.error(
+            "Aux target not found! See your plugin accepted parameters in ./plugins/ folder"
+        )
         return []
+    if "REPEAT_DELIM" in plugin_params.args:
+        repeat_delim = plugin_params.args["REPEAT_DELIM"]
+    return targets.split(repeat_delim)
 
 
 @session_required
@@ -628,7 +620,6 @@ def get_targets_by_severity_count(session, session_id=None):
     :return: data
     :rtype: `dict`
     """
-    filtered_severity_objs = []
     # "not ranked" = gray, "passing" = light green, "info" = light sky blue, "low" = blue, medium = yellow,
     # high = red, critical = dark purple
     severity_frequency = [
@@ -649,9 +640,9 @@ def get_targets_by_severity_count(session, session_id=None):
         else:
             severity_frequency[target_obj.max_owtf_rank + 1]["value"] += 100 / total
 
-    for severity in severity_frequency:
-        if severity["value"] != 0:
-            filtered_severity_objs.append(severity)
+    filtered_severity_objs = [
+        severity for severity in severity_frequency if severity["value"] != 0
+    ]
 
     return {"data": filtered_severity_objs}
 
@@ -691,9 +682,7 @@ def derive_config_from_url(target_url):
         try:
             host, port = host.rsplit(":")
         except ValueError:  # Raised when target doesn't contain the port (e.g. google.fr)
-            port = "80"
-            if "https" == url_scheme:
-                port = "443"
+            port = "443" if url_scheme == "https" else "80"
     else:  # Port found by urlparse.
         port = str(parsed_url.port)
 
@@ -719,7 +708,7 @@ def derive_config_from_url(target_url):
     if target_config["target_url"].startswith(
         ("http", "https")
     ):  # target considered as hostname (web plugins)
-        if not target_config["host_name"] in target_config["alternative_ips"]:
+        if target_config["host_name"] not in target_config["alternative_ips"]:
             target_config["top_domain"] = ".".join(hostname_chunks[1:])
         # Set the top URL (get "example.com" from "www.example.com").
         target_config["top_url"] = "{0}://{1}:{2}".format(protocol, host, port)

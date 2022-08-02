@@ -13,9 +13,7 @@ def run(PluginInfo):
     url_list = []
     files = ["crossdomain.xml", "clientaccesspolicy.xml"]
     for url in get_targets_as_list(["target_url", "top_url"])[0]:
-        for file in files:
-            net_url = str(url + "/" + file)
-            url_list.append(net_url)  # Compute all URL + File combinations
+        url_list.extend(str(f"{url}/{file}") for file in files)
     # The requester owtf component will unique the URLs
     TransactionList = requester.get_transactions(True, url_list)
     # Even though we have transaction list, those transactions do not have id

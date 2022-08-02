@@ -49,11 +49,19 @@ class APIServer(OWTFProcess):
             port = int(SERVER_PORT)
             address = SERVER_ADDR
             self.server.bind(port, address=address)
-            logging.warning("Starting API and UI server at http://{}:{}".format(SERVER_ADDR, str(SERVER_PORT)))
+            logging.warning(
+                f"Starting API and UI server at http://{SERVER_ADDR}:{str(SERVER_PORT)}"
+            )
+
             self.logger.disable_console_logging()
             tornado.options.parse_command_line(
-                args=["dummy_arg", "--log_file_prefix={}".format(SERVER_LOG), "--logging=info"]
+                args=[
+                    "dummy_arg",
+                    f"--log_file_prefix={SERVER_LOG}",
+                    "--logging=info",
+                ]
             )
+
             self.server.start(0)
             tornado.ioloop.IOLoop.instance().start()
         except KeyboardInterrupt:

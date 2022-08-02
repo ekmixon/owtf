@@ -35,14 +35,15 @@ class Plugin(Model):
         Consider last 5 runs only, better performance and accuracy
         """
         poutputs_num = len(self.outputs)
-        if poutputs_num != 0:
-            if poutputs_num < 5:
-                run_times = [poutput.run_time for poutput in self.outputs]
-            else:
-                run_times = [poutput.run_time for poutput in self.outputs[-5:]]
-            return min(run_times)
-        else:
+        if poutputs_num == 0:
             return None
+        run_times = (
+            [poutput.run_time for poutput in self.outputs]
+            if poutputs_num < 5
+            else [poutput.run_time for poutput in self.outputs[-5:]]
+        )
+
+        return min(run_times)
 
     @hybrid_property
     def max_time(self):
@@ -50,14 +51,15 @@ class Plugin(Model):
         Consider last 5 runs only, better performance and accuracy
         """
         poutputs_num = len(self.outputs)
-        if poutputs_num != 0:
-            if poutputs_num < 5:
-                run_times = [poutput.run_time for poutput in self.outputs]
-            else:
-                run_times = [poutput.run_time for poutput in self.outputs[-5:]]
-            return max(run_times)
-        else:
+        if poutputs_num == 0:
             return None
+        run_times = (
+            [poutput.run_time for poutput in self.outputs]
+            if poutputs_num < 5
+            else [poutput.run_time for poutput in self.outputs[-5:]]
+        )
+
+        return max(run_times)
 
     def to_dict(self):
         pdict = dict(self.__dict__)

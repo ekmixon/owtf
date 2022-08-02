@@ -70,14 +70,13 @@ class ErrorDataHandler(APIRequestHandler):
                 raise tornado.web.HTTPError(400)
 
     def post(self, error_id=None):
-        if error_id is None:
-            filter_data = dict(self.request.arguments)
-            message = filter_data["message"][0]
-            trace = filter_data["trace"][0]
-            err_obj = Error.add_error(self.session, message, trace)
-            self.write(err_obj)
-        else:
+        if error_id is not None:
             raise tornado.web.HTTPError(400)
+        filter_data = dict(self.request.arguments)
+        message = filter_data["message"][0]
+        trace = filter_data["trace"][0]
+        err_obj = Error.add_error(self.session, message, trace)
+        self.write(err_obj)
 
     def patch(self, error_id=None):
         if error_id is None:

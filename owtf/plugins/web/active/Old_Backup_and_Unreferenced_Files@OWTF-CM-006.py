@@ -18,7 +18,7 @@ def run(PluginInfo):
     }
 
     # Get settings from the config DB
-    resource = get_resources(DirBusterInteraction["{}".format(INTERACTIVE)])
+    resource = get_resources(DirBusterInteraction[f"{INTERACTIVE}"])
     Content = plugin_helper.CommandDump(
         "Test Command", "Output", resource, PluginInfo, []
     )

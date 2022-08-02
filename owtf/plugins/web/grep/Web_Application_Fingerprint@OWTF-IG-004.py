@@ -8,5 +8,4 @@ DESCRIPTION = "Searches transaction DB for fingerprint traces"
 
 
 def run(PluginInfo):
-    Content = plugin_helper.ResearchFingerprintInlog()
-    return Content
+    return plugin_helper.ResearchFingerprintInlog()

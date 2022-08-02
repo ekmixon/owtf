@@ -26,8 +26,7 @@ def get_raw_resources(session, resource_type):
     )
     # Sorting is necessary for working of ExtractURLs, since it must run after main command, so order is imp
     sort_query = filter_query.order_by(Resource.id)
-    raw_resources = sort_query.all()
-    return raw_resources
+    return sort_query.all()
 
 
 def get_rsrc_replacement_dict(session):
@@ -56,10 +55,10 @@ def get_resources(resource_type):
     session = get_scoped_session()
     replacement_dict = get_rsrc_replacement_dict(session)
     raw_resources = get_raw_resources(session, resource_type)
-    resources = []
-    for name, resource in raw_resources:
-        resources.append([name, multi_replace(resource, replacement_dict)])
-    return resources
+    return [
+        [name, multi_replace(resource, replacement_dict)]
+        for name, resource in raw_resources
+    ]
 
 
 def get_raw_resource_list(session, resource_list):
@@ -70,10 +69,11 @@ def get_raw_resource_list(session, resource_list):
     :return: List of raw resources
     :rtype: `list`
     """
-    raw_resources = session.query(Resource.resource_name, Resource.resource).filter(
-        Resource.resource_type.in_(resource_list)
-    ).all()
-    return raw_resources
+    return (
+        session.query(Resource.resource_name, Resource.resource)
+        .filter(Resource.resource_type.in_(resource_list))
+        .all()
+    )
 
 
 def get_resource_list(session, resource_type_list):
@@ -86,10 +86,10 @@ def get_resource_list(session, resource_type_list):
     """
     replacement_dict = get_rsrc_replacement_dict(session)
     raw_resources = get_raw_resource_list(session, resource_type_list)
-    resources = []
-    for name, resource in raw_resources:
-        resources.append([name, multi_replace(resource, replacement_dict)])
-    return resources
+    return [
+        [name, multi_replace(resource, replacement_dict)]
+        for name, resource in raw_resources
+    ]
 
 
 def get_resources_from_file(resource_file):
@@ -105,7 +105,7 @@ def get_resources_from_file(resource_file):
         resource_file, "r"
     ).read().splitlines()  # To remove stupid '\n' at the end
     for line in config_file:
-        if "#" == line[0]:
+        if line[0] == "#":
             continue  # Skip comment lines
         try:
             type, name, resource = line.split("_____")

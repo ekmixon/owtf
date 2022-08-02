@@ -216,11 +216,13 @@ class RegisterHandler(APIRequestHandler):
             self.success(err)
         else:
             hashed_pass = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-            user = {}
-            user["email"] = email
-            user["password"] = hashed_pass
-            user["name"] = username  # need to be chaned to username
-            user["otp_secret_key"] = pyotp.random_base32()
+            user = {
+                "email": email,
+                "password": hashed_pass,
+                "name": username,
+                "otp_secret_key": pyotp.random_base32(),
+            }
+
             User.add_user(self.session, user)
             data = "User created successfully"
             self.success({"status": "success", "message": data})
@@ -254,8 +256,7 @@ class LogOutHandler(APIRequestHandler):
             }
 
         """
-        auth = self.request.headers.get("Authorization")
-        if auth:
+        if auth := self.request.headers.get("Authorization"):
             parts = auth.split()
             token = parts[1]
             UserLoginToken.delete_user_login_token(self.session, token)
@@ -323,8 +324,7 @@ class AccountActivationGenerateHandler(APIRequestHandler):
 
         """
         email_to = self.get_argument("email", None)
-        email_confirmation_dict = {}
-        email_confirmation_dict["key_value"] = str(uuid4())
+        email_confirmation_dict = {"key_value": str(uuid4())}
         email_confirmation_dict["expiration_time"] = datetime.now() + timedelta(hours=1)
         user_obj = User.find_by_email(self.session, email_to)
         email_confirmation_dict["user_id"] = user_obj.id
@@ -332,22 +332,29 @@ class AccountActivationGenerateHandler(APIRequestHandler):
         EmailConfirmation.add_confirm_password(self.session, email_confirmation_dict)
 
         html = (
-            """\
+            (
+                (
+                    (
+                        """\
         <html>
         <body>
             Welcome """
-            + user_obj.name
-            + ", <br/><br/>"
-            """ 
+                        + user_obj.name
+                        + ", <br/><br/>"
+                        """ 
             Click here """
-            + "http://{}:{}".format(SERVER_ADDR, str(SERVER_PORT))
-            + "/email-verify/"
-            + email_confirmation_dict["key_value"]
+                        + f"http://{SERVER_ADDR}:{str(SERVER_PORT)}"
+                    )
+                    + "/email-verify/"
+                )
+                + email_confirmation_dict["key_value"]
+            )
             + """ to activate your account (Link will expire in 1 hour).
         </body>
         </html>
         """
         )
+
         send_email_using_smtp(
             email_to,
             html,
@@ -504,8 +511,7 @@ class OtpVerifyHandler(APIRequestHandler):
         if user_obj is not None and otp is not None:
             secret_key = user_obj.otp_secret_key
             totp = pyotp.TOTP(secret_key, interval=300)
-            verify = totp.verify(otp)
-            if verify:
+            if verify := totp.verify(otp):
                 self.success({"status": "success", "message": "OTP Verified"})
             else:
                 self.success({"status": "fail", "message": "Invalid OTP"})
@@ -555,8 +561,7 @@ class PasswordChangeHandler(APIRequestHandler):
         elif email_or_username is not None and password is not None and user_obj is not None and otp is not None:
             secret_key = user_obj.otp_secret_key
             totp = pyotp.TOTP(secret_key, interval=300)
-            verify = totp.verify(otp)
-            if verify:
+            if verify := totp.verify(otp):
                 hashed_pass = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
                 User.change_password(self.session, user_obj.email, hashed_pass)
                 data = {"status": "success", "message": "Password Change Successful"}

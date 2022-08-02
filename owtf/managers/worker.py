@@ -123,7 +123,7 @@ class WorkerManager(object):
         :rtype: None
         """
         # Loop while there is some work in worklist
-        for k in range(0, len(self.workers)):
+        for k in range(len(self.workers)):
             if (
                 not self.workers[k]["worker"].output_q.empty()
                 or not check_pid(self.workers[k]["worker"].pid)
@@ -140,8 +140,7 @@ class WorkerManager(object):
                         self.workers[k]["worker"].pid,
                     )
                     self.spawn_worker(index=k)
-                work_to_assign = self.get_task()
-                if work_to_assign:
+                if work_to_assign := self.get_task():
                     logging.info(
                         "Work assigned to %s with pid %d",
                         self.workers[k]["worker"].name,
@@ -153,10 +152,9 @@ class WorkerManager(object):
                     self.workers[k]["work"] = work_to_assign
                     self.workers[k]["busy"] = True
                     self.workers[k]["start_time"] = strftime("%Y/%m/%d %H:%M:%S")
-                if not self.keep_working:
-                    if not self.is_any_worker_busy():
-                        logging.info("All jobs have been done. Exiting.")
-                        workers_finish.send(self)
+                if not self.keep_working and not self.is_any_worker_busy():
+                    logging.info("All jobs have been done. Exiting.")
+                    workers_finish.send(self)
 
     def is_any_worker_busy(self):
         """If a worker is still busy, return True. Return False otherwise.
@@ -287,13 +285,8 @@ class WorkerManager(object):
         :return: Number of busy workers
         :rtype: `int`
         """
-        count = 0
         workers = self.get_worker_details()
-        for worker in workers:
-            if worker["busy"] is True:
-                count += 1
-
-        return count
+        return sum(worker["busy"] is True for worker in workers)
 
     def get_worker_dict(self, pseudo_index):
         """Fetch the worker dict from the list
